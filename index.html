@@ -100,9 +100,22 @@
     </div>
 
     <div class="stats-row">
-        <div class="stat-card"><h3>Hadir (Tepat)</h3><p id="statHadir" style="color: #16a34a;">0</p></div>
-        <div class="stat-card" style="border-color: #ef4444;"><h3>Terlambat</h3><p id="statTelat" style="color: #dc2626;">0</p></div>
-        <div class="stat-card" style="border-color: #3b82f6;"><h3>Total Hari Ini</h3><p id="statTotal">0</p></div>
+        <div class="stat-card">
+            <h3>Hadir (Tepat)</h3>
+            <p id="statHadir" style="color: #16a34a;">0</p>
+        </div>
+        <div class="stat-card" style="border-color: #ef4444;">
+            <h3>Terlambat</h3>
+            <p id="statTelat" style="color: #dc2626;">0</p>
+        </div>
+        <div class="stat-card" style="border-color: #3b82f6;">
+            <h3>Presensi Masuk</h3>
+            <p id="statTotal">0</p>
+        </div>
+        <div class="stat-card" style="border-color: #8b5cf6;">
+            <h3>Total Karyawan</h3>
+            <p id="statTotalKaryawan" style="color: #4c1d95;">0</p>
+        </div>
     </div>
 
     <div class="controls">
@@ -232,20 +245,33 @@
         // C. HITUNG ULANG STATUS (Agar Sinkron)
         currentData = (data || []).map(d => {
             let status = 'Tepat Waktu';
-            // Logic: Jika ada jam masuk dan jam masuk > batas -> Terlambat
             if(d.jam_masuk) {
                 if(d.jam_masuk > BATAS_TELAT_GLOBAL) status = 'Terlambat';
             } else {
                 status = '-';
             }
-            return { ...d, computed_status: status }; // Kita pakai computed_status, bukan status dari DB
+            return { ...d, computed_status: status }; 
         });
 
         renderAll();
     }
 
     // ============================================
-    // 4. RENDER UI
+    // 4. FETCH TOTAL KARYAWAN (FUNGSI BARU)
+    // ============================================
+    async function loadTotalKaryawan() {
+        // Mengambil jumlah baris di tabel karyawan
+        const { count, error } = await client
+            .from('karyawan')
+            .select('*', { count: 'exact', head: true });
+        
+        if(!error) {
+            document.getElementById('statTotalKaryawan').innerText = count || 0;
+        }
+    }
+
+    // ============================================
+    // 5. RENDER UI
     // ============================================
     function renderAll() {
         const tbody = document.getElementById('dataBody');
@@ -315,7 +341,7 @@
     }
 
     // ============================================
-    // 5. EXPORT
+    // 6. EXPORT
     // ============================================
     function exportExcel() {
         if(currentData.length === 0) return alert("Data Kosong");
@@ -342,6 +368,7 @@
 
     // INIT
     loadSettings();
+    loadTotalKaryawan(); // Memuat jumlah karyawan
     fetchData('hari', document.querySelector('.btn-filter'));
 
 </script>
