@@ -14,66 +14,42 @@
     <style>
         :root { 
             --primary: #2563eb; 
-            --primary-dark: #1d4ed8;
             --bg: #f8fafc; 
             --text: #1e293b; 
-            --border: #e2e8f0;
-            --success: #16a34a;
-            --danger: #dc2626;
-            --warning: #f59e0b;
         }
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--bg); color: var(--text); padding: 20px; margin: 0; }
-        .container { max-width: 1200px; margin: 0 auto; display: flex; flex-direction: column; gap: 24px; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); padding: 20px; margin: 0; }
+        .container { max-width: 1200px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; }
         
         /* HEADER */
-        .header { display: flex; justify-content: space-between; align-items: center; background: white; padding: 20px; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
-        h1 { color: var(--primary); margin: 0; font-size: 1.5rem; }
-        #clock { font-size: 1.1rem; font-weight: bold; color: #64748b; font-family: monospace; }
+        .header { background: white; padding: 20px; border-radius: 12px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        h1 { margin: 0; color: var(--primary); font-size: 1.5rem; }
         
-        /* PANEL PENGATURAN */
-        .settings-panel { background: white; padding: 24px; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
-        .settings-panel h3 { margin-top: 0; color: #334155; border-bottom: 2px solid #f1f5f9; padding-bottom: 12px; margin-bottom: 20px; }
-        .settings-table-wrapper { overflow-x: auto; margin-bottom: 20px; }
-        .settings-table { width: 100%; border-collapse: collapse; min-width: 900px; }
-        .settings-table th { text-align: left; padding: 12px; background: #f8fafc; font-size: 0.85rem; color: #64748b; font-weight: 600; text-transform: uppercase; border-bottom: 2px solid var(--border); }
-        .settings-table td { padding: 10px; border-bottom: 1px solid var(--border); vertical-align: middle; }
-        .settings-table input[type="time"] { padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px; width: 100%; box-sizing: border-box; font-family: monospace; color: #334155; }
-        .settings-table tr:hover { background-color: #f8fafc; }
+        /* STATS */
+        .stats-row { display: flex; gap: 20px; }
+        .stat-card { flex: 1; background: white; padding: 24px; border-radius: 12px; text-align: center; border-bottom: 4px solid #cbd5e1; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        .stat-card h3 { margin: 0 0 10px 0; font-size: 0.85rem; color: #64748b; text-transform: uppercase; letter-spacing: 1px; }
+        .stat-card p { margin: 0; font-size: 2.5rem; font-weight: 800; color: #1e293b; }
         
-        .btn-save-settings { width: 100%; padding: 14px; background: var(--primary); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; letter-spacing: 0.5px; transition: 0.2s; }
-        .btn-save-settings:hover { background: var(--primary-dark); transform: translateY(-1px); }
-
-        /* KONTROL & STATS */
-        .controls { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
-        button { padding: 10px 18px; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; color: white; transition: 0.2s; font-size: 0.9rem; }
-        .btn-filter { background: white; color: #64748b; border: 1px solid #cbd5e1; } 
-        .btn-filter:hover { background: #f1f5f9; }
-        .btn-filter.active { background: var(--primary); color: white; border-color: var(--primary); }
+        /* CHART & TABLE */
+        .content-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 20px; }
+        .box { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        .chart-container { height: 300px; position: relative; }
         
-        .btn-excel { background: var(--success); display: flex; align-items: center; gap: 6px; } 
-        .btn-excel:hover { background: #15803d; }
-        .btn-pdf { background: var(--danger); display: flex; align-items: center; gap: 6px; } 
-        .btn-pdf:hover { background: #b91c1c; }
-
-        .stats-row { display: flex; gap: 24px; }
-        .stat-card { flex: 1; background: white; padding: 24px; border-radius: 12px; text-align: center; border-bottom: 4px solid var(--primary); box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
-        .stat-card h3 { margin: 0 0 8px 0; font-size: 0.9rem; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; }
-        .stat-card p { margin: 0; font-size: 2.5rem; font-weight: 800; color: var(--text); }
-
-        /* CHART & DATA TABLE */
-        .charts-row { display: grid; grid-template-columns: 2fr 1fr; gap: 24px; }
-        .chart-box { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); height: 350px; position: relative; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th { background: #f1f5f9; text-align: left; padding: 12px; font-size: 0.85rem; color: #64748b; text-transform: uppercase; }
+        td { padding: 12px; border-bottom: 1px solid #e2e8f0; font-size: 0.95rem; }
         
-        .data-table-box { background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
-        .data-table { width: 100%; border-collapse: collapse; }
-        .data-table th { background: #f1f5f9; padding: 16px; text-align: left; font-size: 0.9rem; color: #475569; font-weight: 600; }
-        .data-table td { padding: 16px; border-bottom: 1px solid var(--border); font-size: 0.95rem; }
-        .status-badge { padding: 6px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
-        .st-Tepat-Waktu { background: #dcfce7; color: #166534; }
-        .st-Terlambat { background: #fee2e2; color: #991b1b; }
-        .st-Izin { background: #fef3c7; color: #92400e; }
+        /* BADGES - PENTING: Default Abu-abu agar ketahuan kalau error */
+        .badge { padding: 5px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: 700; display: inline-block; min-width: 80px; text-align: center; }
+        .bg-green { background: #dcfce7; color: #166534; }  /* Tepat Waktu */
+        .bg-red   { background: #fee2e2; color: #991b1b; }  /* Terlambat */
+        .bg-grey  { background: #f1f5f9; color: #64748b; }  /* Tidak Jelas */
 
-        @media(max-width: 768px) { .charts-row { grid-template-columns: 1fr; } .stats-row { flex-direction: column; gap: 12px; } }
+        /* CONTROLS */
+        .controls { display: flex; gap: 10px; }
+        button { padding: 10px 16px; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; transition: 0.2s; }
+        .btn-active { background: var(--primary); color: white; }
+        .btn-inactive { background: white; border: 1px solid #cbd5e1; color: #64748b; }
     </style>
 </head>
 <body>
@@ -81,357 +57,206 @@
 <div class="container">
     <div class="header">
         <div>
-            <h1>Admin Presensi RFID</h1>
-            <small style="color: #64748b;">Panel Kontrol & Laporan</small>
+            <h1>Dashboard Presensi</h1>
+            <small id="debug-info" style="color: #64748b; font-family: monospace;">Memuat konfigurasi...</small>
         </div>
-        <div id="clock">--:--:--</div>
-    </div>
-
-    <div class="settings-panel">
-        <h3>⚙️ Pengaturan Jadwal Kerja Mingguan</h3>
-        <div class="settings-table-wrapper">
-            <table class="settings-table">
-                <thead>
-                    <tr>
-                        <th>Hari</th>
-                        <th>Mulai Masuk</th>
-                        <th>Batas Terlambat</th>
-                        <th>Akhir Masuk</th>
-                        <th>Mulai Pulang</th>
-                        <th>Akhir Pulang</th>
-                        <th style="text-align: center;">Libur</th>
-                    </tr>
-                </thead>
-                <tbody id="settingsBody">
-                    <tr><td colspan="7" style="text-align:center;">Memuat data jadwal...</td></tr>
-                </tbody>
-            </table>
-        </div>
-        <button onclick="saveAllSettings()" class="btn-save-settings">SIMPAN SEMUA PERUBAHAN JADWAL</button>
+        <div id="clock" style="font-weight: bold; font-size: 1.2rem;">--:--:--</div>
     </div>
 
     <div class="stats-row">
-        <div class="stat-card">
-            <h3>Hadir Hari Ini</h3>
-            <p id="statHadir">0</p>
+        <div class="stat-card" style="border-color: #22c55e;">
+            <h3>Hadir (Tepat Waktu)</h3>
+            <p id="statTepat" style="color: #166534;">0</p>
         </div>
-        <div class="stat-card" style="border-color: var(--danger);">
+        <div class="stat-card" style="border-color: #ef4444;">
             <h3>Terlambat</h3>
-            <p id="statTelat" style="color: var(--danger);">0</p>
+            <p id="statTelat" style="color: #991b1b;">0</p>
         </div>
-        <div class="stat-card" style="border-color: #0ea5e9;">
-            <h3>Total Karyawan</h3>
-            <p id="statTotalKaryawan">-</p>
+        <div class="stat-card" style="border-color: #3b82f6;">
+            <h3>Total Hadir</h3>
+            <p id="statTotal">0</p>
         </div>
     </div>
 
     <div class="controls">
-        <button onclick="fetchData('hari', this)" class="btn-filter active">Hari Ini</button>
-        <button onclick="fetchData('minggu', this)" class="btn-filter">Minggu Ini</button>
-        <button onclick="fetchData('bulan', this)" class="btn-filter">Bulan Ini</button>
-        <div style="flex-grow: 1;"></div>
-        <button onclick="exportExcel()" class="btn-excel">📥 Export Excel</button>
-        <button onclick="exportPDF()" class="btn-pdf">📄 Export PDF</button>
+        <button onclick="fetchData('hari', this)" class="btn-active">Hari Ini</button>
+        <button onclick="fetchData('minggu', this)" class="btn-inactive">Minggu Ini</button>
+        <button onclick="fetchData('bulan', this)" class="btn-inactive">Bulan Ini</button>
+        <div style="flex-grow:1"></div>
+        <button onclick="exportExcel()" style="background: #10b981; color: white;">Excel</button>
     </div>
 
-    <div class="charts-row">
-        <div class="chart-box">
-            <canvas id="lineChart"></canvas>
+    <div class="content-grid">
+        <div class="box">
+            <h3 style="margin-top:0;">Log Kehadiran</h3>
+            <div style="overflow-x:auto;">
+                <table id="mainTable">
+                    <thead>
+                        <tr>
+                            <th>Jam</th>
+                            <th>Nama</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableBody"></tbody>
+                </table>
+            </div>
         </div>
-        <div class="chart-box">
-            <canvas id="doughnutChart"></canvas>
-        </div>
-    </div>
 
-    <div class="data-table-box">
-        <table class="data-table">
-            <thead>
-                <tr>
-                    <th>Tanggal</th>
-                    <th>Nama Karyawan</th>
-                    <th>Jam Masuk</th>
-                    <th>Jam Pulang</th>
-                    <th>Status</th>
-                </tr>
-            </thead>
-            <tbody id="dataBody">
-                <tr><td colspan="5" style="text-align:center; padding: 20px;">Memuat data...</td></tr>
-            </tbody>
-        </table>
+        <div class="box">
+            <h3 style="margin-top:0; text-align:center;">Proporsi</h3>
+            <div class="chart-container">
+                <canvas id="doughnutChart"></canvas>
+            </div>
+        </div>
     </div>
 </div>
 
 <script>
-    // ============================================
-    // 1. KONFIGURASI SUPABASE
-    // ============================================
+    // 1. CONFIG
     const SUPABASE_URL = 'https://yoxipkgpxhavmxknlwft.supabase.co';
-    const SUPABASE_KEY = 'sb_publishable_nGr7Fit3oX6dF4WcNPOq9g_AFpTcezy'; 
+    const SUPABASE_KEY = 'sb_publishable_nGr7Fit3oX6dF4WcNPOq9g_AFpTcezy';
     const client = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-    // ============================================
-    // 2. VARIABEL GLOBAL
-    // ============================================
-    let currentData = [];
-    let BATAS_TELAT_GLOBAL = "08:15:00"; // Default fallback
-    let lineChartInstance, doughnutChartInstance;
+    // Variabel Global
+    let BATAS_TELAT = "08:15:00"; 
+    let globalData = [];
+    let myChart = null;
 
-    // JAM REALTIME
-    setInterval(() => {
-        document.getElementById('clock').innerText = new Date().toLocaleTimeString('id-ID');
-    }, 1000);
+    // Jam Realtime
+    setInterval(() => document.getElementById('clock').innerText = new Date().toLocaleTimeString('id-ID'), 1000);
 
-    // ============================================
-    // 3. LOGIC UTAMA (Fetch & Process)
-    // ============================================
+    // 2. LOGIC UTAMA
     async function fetchData(range, btn) {
-        if(btn) { 
-            document.querySelectorAll('.btn-filter').forEach(b => b.classList.remove('active')); 
-            btn.classList.add('active'); 
-        }
-        
-        document.getElementById('dataBody').innerHTML = '<tr><td colspan="5" style="text-align:center;">Memuat data...</td></tr>';
-
-        // A. AMBIL BATAS TELAT HARI INI DARI DB
-        const hariIniID = new Date().getDay() || 7; 
-        const { data: jadwal } = await client
-            .from('pengaturan_absen')
-            .select('batas_terlambat')
-            .eq('hari_id', hariIniID)
-            .single();
-            
-        if(jadwal && jadwal.batas_terlambat) {
-            BATAS_TELAT_GLOBAL = jadwal.batas_terlambat;
+        // UI Update
+        if(btn) {
+            document.querySelectorAll('button').forEach(b => {
+                if(b.innerText === 'Hari Ini' || b.innerText === 'Minggu Ini' || b.innerText === 'Bulan Ini') {
+                    b.className = 'btn-inactive';
+                }
+            });
+            btn.className = 'btn-active';
         }
 
-        // B. QUERY DATA PRESENSI
-        let query = client.from('presensi').select('*, karyawan(nama, divisi)');
-        const now = new Date();
-        const todayStr = now.toISOString().split('T')[0];
+        // A. AMBIL BATAS JAM DARI DB
+        const hariIni = new Date().getDay() || 7; 
+        const { data: setting } = await client.from('pengaturan_absen').select('batas_terlambat').eq('hari_id', hariIni).single();
+        if(setting) BATAS_TELAT = setting.batas_terlambat;
         
-        if(range === 'hari') {
-            query = query.eq('tanggal', todayStr);
-        } else if(range === 'minggu') {
-            const oneWeekAgo = new Date();
-            oneWeekAgo.setDate(now.getDate() - 7);
-            query = query.gte('tanggal', oneWeekAgo.toISOString());
-        } else if(range === 'bulan') {
-            const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-            query = query.gte('tanggal', firstDayOfMonth.toISOString());
+        // Tampilkan info debug di header
+        document.getElementById('debug-info').innerText = `Batas Telat Hari Ini: ${BATAS_TELAT}`;
+
+        // B. QUERY DATA
+        let query = client.from('presensi').select('*, karyawan(nama)');
+        const today = new Date().toISOString().split('T')[0];
+        
+        if(range === 'hari') query = query.eq('tanggal', today);
+        else if(range === 'minggu') {
+            const d = new Date(); d.setDate(d.getDate()-7);
+            query = query.gte('tanggal', d.toISOString());
         }
 
         const { data, error } = await query.order('jam_masuk', {ascending: false});
+        if(error) return alert("Gagal ambil data");
 
-        if(error) { console.error(error); return; }
-
-        // C. PROSES DATA (SINKRONISASI LOGIC)
-        // Kita hitung status DI SINI agar Table & Chart pakai data yang sama persis
-        const processedData = (data || []).map(d => {
-            let finalStatus = d.status_kehadiran;
+        // C. PROSES HITUNG ULANG (RE-CALCULATE)
+        // Kita tidak percaya 100% pada kolom status DB, kita hitung ulang biar konsisten
+        globalData = (data || []).map(d => {
+            let status = 'Tepat Waktu';
             
-            // Logic Otomatis: Jika status DB kosong, hitung berdasarkan jam
-            if (!finalStatus && d.jam_masuk) {
-                if (d.jam_masuk > BATAS_TELAT_GLOBAL) {
-                    finalStatus = 'Terlambat';
-                } else {
-                    finalStatus = 'Tepat Waktu';
+            // Logika: Jika ada jam masuk, dan jam masuk > batas telat -> TERLAMBAT
+            if(d.jam_masuk) {
+                // Bandingkan string jam "15:49" > "08:15"
+                if(d.jam_masuk > BATAS_TELAT) {
+                    status = 'Terlambat';
                 }
-            } else if (!finalStatus) {
-                finalStatus = '-';
+            } else {
+                status = '-';
             }
 
-            return { 
-                ...d, 
-                computed_status: finalStatus // Simpan hasil hitungan di field baru
-            };
+            return { ...d, computed_status: status };
         });
 
-        currentData = processedData; // Simpan ke global
-        
-        // Render UI
-        renderTable(currentData);
-        renderCharts(currentData);
-        updateStats(currentData);
+        renderAll();
     }
 
-    // ============================================
-    // 4. RENDER TABLE
-    // ============================================
-    function renderTable(data) {
-        const tbody = document.getElementById('dataBody');
+    function renderAll() {
+        const tbody = document.getElementById('tableBody');
         tbody.innerHTML = '';
-        
-        if(data.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding: 20px;">Tidak ada data.</td></tr>';
-            return;
-        }
 
-        data.forEach(d => {
-            // Gunakan 'computed_status' yang sudah dihitung di atas
-            let status = d.computed_status;
-            let badgeClass = 'st-Tepat-Waktu';
-            
-            if(status === 'Terlambat') badgeClass = 'st-Terlambat';
-            else if(status === 'Izin') badgeClass = 'st-Izin';
-            else if(status === '-') badgeClass = '';
+        let countTepat = 0;
+        let countTelat = 0;
 
-            // Format Jam (Hapus detik mikro)
-            let showMasuk = d.jam_masuk ? d.jam_masuk.substring(0, 5) : '-';
-            let showPulang = d.jam_keluar ? d.jam_keluar.substring(0, 5) : '-';
-            let nama = d.karyawan ? d.karyawan.nama : 'Unknown';
-            
-            const tr = `
+        globalData.forEach(d => {
+            // Hitung Stats
+            if(d.computed_status === 'Terlambat') countTelat++;
+            else if(d.computed_status === 'Tepat Waktu') countTepat++;
+
+            // Render Tabel
+            let badgeColor = 'bg-grey';
+            if(d.computed_status === 'Tepat Waktu') badgeColor = 'bg-green';
+            if(d.computed_status === 'Terlambat') badgeColor = 'bg-red';
+
+            const jam = d.jam_masuk ? d.jam_masuk.substring(0, 5) : '-';
+            const nama = d.karyawan ? d.karyawan.nama : 'Unknown';
+
+            tbody.innerHTML += `
                 <tr>
-                    <td>${d.tanggal}</td>
-                    <td><b>${nama}</b></td>
-                    <td>${showMasuk}</td>
-                    <td>${showPulang}</td>
-                    <td><span class="status-badge ${badgeClass}">${status}</span></td>
-                </tr>`;
-            tbody.innerHTML += tr;
-        });
-    }
-
-    // ============================================
-    // 5. RENDER CHARTS (PERBAIKAN UTAMA DISINI)
-    // ============================================
-    function renderCharts(data) {
-        // Line Chart Data
-        const dateCounts = {};
-        data.forEach(d => { dateCounts[d.tanggal] = (dateCounts[d.tanggal] || 0) + 1; });
-        const sortedDates = Object.keys(dateCounts).sort();
-        const lineData = sortedDates.map(date => dateCounts[date]);
-
-        // Doughnut Chart Data (Gunakan computed_status!)
-        let tepat = 0, telat = 0;
-        data.forEach(d => {
-            if(d.computed_status === 'Terlambat') telat++;
-            else if(d.computed_status === 'Tepat Waktu') tepat++;
-            // Status '-' atau 'Izin' bisa ditambahkan logic lain jika mau
+                    <td style="font-family:monospace; font-weight:bold;">${jam}</td>
+                    <td>${nama}</td>
+                    <td><span class="badge ${badgeColor}">${d.computed_status}</span></td>
+                </tr>
+            `;
         });
 
-        // Reset Chart Lama
-        if(lineChartInstance) lineChartInstance.destroy();
-        if(doughnutChartInstance) doughnutChartInstance.destroy();
+        // Render Stats Text
+        document.getElementById('statTepat').innerText = countTepat;
+        document.getElementById('statTelat').innerText = countTelat;
+        document.getElementById('statTotal').innerText = globalData.length;
 
-        // Buat Chart Baru
-        const ctxLine = document.getElementById('lineChart').getContext('2d');
-        lineChartInstance = new Chart(ctxLine, {
-            type: 'line',
-            data: {
-                labels: sortedDates,
-                datasets: [{
-                    label: 'Kehadiran',
-                    data: lineData,
-                    borderColor: '#2563eb',
-                    backgroundColor: 'rgba(37, 99, 235, 0.1)',
-                    fill: true,
-                    tension: 0.4
-                }]
-            },
-            options: { maintainAspectRatio: false, plugins: { legend: {display:false}, title: {display:true, text:'Tren Kehadiran'} } }
-        });
-
-        const ctxDoughnut = document.getElementById('doughnutChart').getContext('2d');
-        doughnutChartInstance = new Chart(ctxDoughnut, {
+        // Render Chart
+        if(myChart) myChart.destroy();
+        const ctx = document.getElementById('doughnutChart').getContext('2d');
+        
+        // Debug: Jika chart kosong/aneh, pastikan array data tidak [0,0]
+        const chartData = [countTepat, countTelat];
+        
+        myChart = new Chart(ctx, {
             type: 'doughnut',
             data: {
                 labels: ['Tepat Waktu', 'Terlambat'],
                 datasets: [{
-                    data: [tepat, telat],
-                    backgroundColor: ['#16a34a', '#dc2626']
+                    data: chartData,
+                    backgroundColor: ['#22c55e', '#ef4444'], // Hijau, Merah
+                    borderWidth: 0
                 }]
             },
-            options: { maintainAspectRatio: false, plugins: { title: {display:true, text:'Proporsi Ketepatan Waktu'} } }
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { position: 'bottom' }
+                }
+            }
         });
     }
 
-    // ============================================
-    // 6. UPDATE STATS CARD
-    // ============================================
-    async function updateStats(data) {
-        let hadir = data.length;
-        let telat = data.filter(d => d.computed_status === 'Terlambat').length;
-
-        document.getElementById('statHadir').innerText = hadir;
-        document.getElementById('statTelat').innerText = telat;
-
-        // Total Karyawan (Fetch terpisah)
-        const { count } = await client.from('karyawan').select('*', { count: 'exact', head: true });
-        document.getElementById('statTotalKaryawan').innerText = count || 0;
-    }
-
-    // ============================================
-    // 7. PENGATURAN & EXPORT
-    // ============================================
-    async function loadSettings() {
-        const { data, error } = await client.from('pengaturan_absen').select('*').order('hari_id', {ascending: true});
-        if (error) return;
-        const tbody = document.getElementById('settingsBody');
-        tbody.innerHTML = '';
-        data.forEach(row => {
-            const isLibur = row.is_libur ? 'checked' : '';
-            tbody.innerHTML += `
-                <tr data-id="${row.id}">
-                    <td style="font-weight:bold; color:var(--primary)">${row.hari}</td>
-                    <td><input type="time" class="inp-mm" value="${row.mulai_masuk||''}"></td>
-                    <td><input type="time" class="inp-bt" value="${row.batas_terlambat||''}"></td>
-                    <td><input type="time" class="inp-am" value="${row.akhir_masuk||''}"></td>
-                    <td><input type="time" class="inp-mk" value="${row.mulai_keluar||''}"></td>
-                    <td><input type="time" class="inp-ak" value="${row.akhir_keluar||''}"></td>
-                    <td style="text-align:center"><input type="checkbox" class="inp-libur" ${isLibur} style="width:18px;height:18px"></td>
-                </tr>`;
-        });
-    }
-
-    async function saveAllSettings() {
-        const rows = document.querySelectorAll('#settingsBody tr');
-        const btn = document.querySelector('.btn-save-settings');
-        btn.innerText = "Menyimpan..."; btn.disabled = true;
-        
-        for (const row of rows) {
-            const id = row.getAttribute('data-id');
-            if(!id) continue;
-            await client.from('pengaturan_absen').update({
-                mulai_masuk: row.querySelector('.inp-mm').value || null,
-                batas_terlambat: row.querySelector('.inp-bt').value || null,
-                akhir_masuk: row.querySelector('.inp-am').value || null,
-                mulai_keluar: row.querySelector('.inp-mk').value || null,
-                akhir_keluar: row.querySelector('.inp-ak').value || null,
-                is_libur: row.querySelector('.inp-libur').checked
-            }).eq('id', id);
-        }
-        btn.disabled = false; btn.innerText = "SIMPAN SEMUA PERUBAHAN JADWAL";
-        alert('✅ Jadwal berhasil disimpan!');
-    }
-
+    // Export Excel Sederhana
     function exportExcel() {
-        if(currentData.length===0) return alert("Data kosong");
-        const exportData = currentData.map(d => ({
-            Tanggal: d.tanggal, Nama: d.karyawan?.nama, 
-            Masuk: d.jam_masuk, Pulang: d.jam_keluar, Status: d.computed_status
-        }));
+        if(!globalData.length) return alert("Data Kosong");
+        const ws = XLSX.utils.json_to_sheet(globalData.map(d => ({
+            Tanggal: d.tanggal,
+            Nama: d.karyawan?.nama,
+            Jam_Masuk: d.jam_masuk,
+            Status_Hitungan: d.computed_status
+        })));
         const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(exportData), "Laporan");
-        XLSX.writeFile(wb, "Laporan_Presensi.xlsx");
+        XLSX.utils.book_append_sheet(wb, ws, "Presensi");
+        XLSX.writeFile(wb, "Laporan.xlsx");
     }
 
-    function exportPDF() {
-        if(currentData.length===0) return alert("Data kosong");
-        const { jsPDF } = window.jspdf;
-        const doc = new jsPDF();
-        doc.text("Laporan Presensi", 14, 15);
-        doc.autoTable({
-            head: [['Tanggal', 'Nama', 'Masuk', 'Pulang', 'Status']],
-            body: currentData.map(d => [d.tanggal, d.karyawan?.nama, d.jam_masuk||'-', d.jam_keluar||'-', d.computed_status]),
-            startY: 25
-        });
-        doc.save("Laporan_Presensi.pdf");
-    }
-
-    // INIT
-    loadSettings();
-    fetchData('hari', document.querySelector('.btn-filter'));
+    // Init Load
+    fetchData('hari', document.querySelector('.btn-active'));
 
 </script>
 
