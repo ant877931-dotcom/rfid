@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard Presensi RFID - Multi Hari</title>
+    <title>Dashboard Admin Presensi RFID</title>
     
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -13,84 +13,116 @@
     
     <style>
         :root { 
-            --primary: #2563eb; --bg: #f8fafc; --text: #1e293b; --border: #e2e8f0;
+            --primary: #2563eb; 
+            --primary-dark: #1d4ed8;
+            --bg: #f8fafc; 
+            --text: #1e293b; 
+            --border: #e2e8f0;
+            --success: #16a34a;
+            --danger: #dc2626;
+            --warning: #f59e0b;
         }
-        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); padding: 20px; margin: 0; }
-        .container { max-width: 1200px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--bg); color: var(--text); padding: 20px; margin: 0; }
+        .container { max-width: 1200px; margin: 0 auto; display: flex; flex-direction: column; gap: 24px; }
         
         /* HEADER */
-        .header { display: flex; justify-content: space-between; align-items: center; }
+        .header { display: flex; justify-content: space-between; align-items: center; background: white; padding: 20px; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
         h1 { color: var(--primary); margin: 0; font-size: 1.5rem; }
+        #clock { font-size: 1.1rem; font-weight: bold; color: #64748b; font-family: monospace; }
         
-        /* PANEL PENGATURAN (UPDATE BARU) */
-        .settings-panel { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
-        .settings-table-wrapper { overflow-x: auto; }
-        .settings-table { width: 100%; border-collapse: collapse; min-width: 800px; }
-        .settings-table th { text-align: left; padding: 10px; background: #f1f5f9; font-size: 0.85rem; color: #64748b; }
-        .settings-table td { padding: 8px; border-bottom: 1px solid var(--border); }
-        .settings-table input[type="time"] { padding: 6px; border: 1px solid #cbd5e1; border-radius: 4px; width: 100%; box-sizing: border-box; }
-        .btn-save-settings { margin-top: 15px; width: 100%; padding: 12px; background: var(--primary); color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; }
-        .btn-save-settings:hover { background: #1d4ed8; }
+        /* PANEL PENGATURAN */
+        .settings-panel { background: white; padding: 24px; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        .settings-panel h3 { margin-top: 0; color: #334155; border-bottom: 2px solid #f1f5f9; padding-bottom: 12px; margin-bottom: 20px; }
+        .settings-table-wrapper { overflow-x: auto; margin-bottom: 20px; }
+        .settings-table { width: 100%; border-collapse: collapse; min-width: 900px; }
+        .settings-table th { text-align: left; padding: 12px; background: #f8fafc; font-size: 0.85rem; color: #64748b; font-weight: 600; text-transform: uppercase; border-bottom: 2px solid var(--border); }
+        .settings-table td { padding: 10px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+        .settings-table input[type="time"] { padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px; width: 100%; box-sizing: border-box; font-family: monospace; color: #334155; }
+        .settings-table tr:hover { background-color: #f8fafc; }
+        
+        .btn-save-settings { width: 100%; padding: 14px; background: var(--primary); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; letter-spacing: 0.5px; transition: 0.2s; }
+        .btn-save-settings:hover { background: var(--primary-dark); transform: translateY(-1px); }
 
         /* KONTROL & STATS */
-        .controls { display: flex; gap: 10px; flex-wrap: wrap; }
-        button { padding: 8px 15px; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; color: white; transition: 0.2s; }
-        .btn-filter { background: #94a3b8; } .btn-filter.active { background: var(--primary); }
-        .btn-excel { background: #16a34a; } .btn-pdf { background: #dc2626; }
+        .controls { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
+        button { padding: 10px 18px; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; color: white; transition: 0.2s; font-size: 0.9rem; }
+        .btn-filter { background: white; color: #64748b; border: 1px solid #cbd5e1; } 
+        .btn-filter:hover { background: #f1f5f9; }
+        .btn-filter.active { background: var(--primary); color: white; border-color: var(--primary); }
+        
+        .btn-excel { background: var(--success); display: flex; align-items: center; gap: 6px; } 
+        .btn-excel:hover { background: #15803d; }
+        .btn-pdf { background: var(--danger); display: flex; align-items: center; gap: 6px; } 
+        .btn-pdf:hover { background: #b91c1c; }
 
-        .stats-row { display: flex; gap: 20px; }
-        .stat-card { flex: 1; background: white; padding: 20px; border-radius: 10px; text-align: center; border-bottom: 4px solid var(--primary); box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
-        .stat-card h3 { margin: 0 0 5px 0; font-size: 0.9rem; color: #64748b; }
-        .stat-card p { margin: 0; font-size: 2rem; font-weight: 800; }
+        .stats-row { display: flex; gap: 24px; }
+        .stat-card { flex: 1; background: white; padding: 24px; border-radius: 12px; text-align: center; border-bottom: 4px solid var(--primary); box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        .stat-card h3 { margin: 0 0 8px 0; font-size: 0.9rem; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; }
+        .stat-card p { margin: 0; font-size: 2.5rem; font-weight: 800; color: var(--text); }
 
         /* CHART & DATA TABLE */
-        .charts-row { display: grid; grid-template-columns: 2fr 1fr; gap: 20px; }
-        .chart-box { background: white; padding: 15px; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); height: 300px; }
+        .charts-row { display: grid; grid-template-columns: 2fr 1fr; gap: 24px; }
+        .chart-box { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); height: 350px; position: relative; }
         
-        .data-table-box { background: white; border-radius: 10px; overflow: hidden; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        .data-table-box { background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
         .data-table { width: 100%; border-collapse: collapse; }
-        .data-table th { background: #f1f5f9; padding: 12px; text-align: left; }
-        .data-table td { padding: 12px; border-bottom: 1px solid var(--border); }
-        .status-badge { padding: 4px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: bold; }
+        .data-table th { background: #f1f5f9; padding: 16px; text-align: left; font-size: 0.9rem; color: #475569; font-weight: 600; }
+        .data-table td { padding: 16px; border-bottom: 1px solid var(--border); font-size: 0.95rem; }
+        .status-badge { padding: 6px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
         .st-Tepat-Waktu { background: #dcfce7; color: #166534; }
-        .st-Terlambat { background: #fef3c7; color: #b45309; }
+        .st-Terlambat { background: #fee2e2; color: #991b1b; }
+        .st-Izin { background: #fef3c7; color: #92400e; }
 
-        @media(max-width: 768px) { .charts-row { grid-template-columns: 1fr; } .stats-row { flex-direction: column; } }
+        @media(max-width: 768px) { .charts-row { grid-template-columns: 1fr; } .stats-row { flex-direction: column; gap: 12px; } }
     </style>
 </head>
 <body>
 
 <div class="container">
     <div class="header">
-        <h1>Admin Presensi RFID</h1>
-        <div id="clock" style="font-weight: bold; color: #64748b;">--:--:--</div>
+        <div>
+            <h1>Admin Presensi RFID</h1>
+            <small style="color: #64748b;">Panel Kontrol & Laporan</small>
+        </div>
+        <div id="clock">--:--:--</div>
     </div>
 
     <div class="settings-panel">
-        <h3>⚙️ Jadwal Jam Kerja (Senin - Minggu)</h3>
+        <h3>⚙️ Pengaturan Jadwal Kerja Mingguan</h3>
         <div class="settings-table-wrapper">
             <table class="settings-table">
                 <thead>
                     <tr>
                         <th>Hari</th>
                         <th>Mulai Masuk</th>
-                        <th>Batas Telat</th>
+                        <th>Batas Terlambat</th>
                         <th>Akhir Masuk</th>
                         <th>Mulai Pulang</th>
                         <th>Akhir Pulang</th>
-                        <th>Libur?</th>
+                        <th style="text-align: center;">Libur</th>
                     </tr>
                 </thead>
                 <tbody id="settingsBody">
-                    </tbody>
+                    <tr><td colspan="7" style="text-align:center;">Memuat data jadwal...</td></tr>
+                </tbody>
             </table>
         </div>
         <button onclick="saveAllSettings()" class="btn-save-settings">SIMPAN SEMUA PERUBAHAN JADWAL</button>
     </div>
 
     <div class="stats-row">
-        <div class="stat-card"><h3>Hadir Hari Ini</h3><p id="statHadir">0</p></div>
-        <div class="stat-card" style="border-color: #f59e0b;"><h3>Terlambat</h3><p id="statTelat">0</p></div>
+        <div class="stat-card">
+            <h3>Hadir Hari Ini</h3>
+            <p id="statHadir">0</p>
+        </div>
+        <div class="stat-card" style="border-color: var(--danger);">
+            <h3>Terlambat</h3>
+            <p id="statTelat" style="color: var(--danger);">0</p>
+        </div>
+        <div class="stat-card" style="border-color: #0ea5e9;">
+            <h3>Total Karyawan</h3>
+            <p id="statTotalKaryawan">-</p>
+        </div>
     </div>
 
     <div class="controls">
@@ -98,78 +130,118 @@
         <button onclick="fetchData('minggu', this)" class="btn-filter">Minggu Ini</button>
         <button onclick="fetchData('bulan', this)" class="btn-filter">Bulan Ini</button>
         <div style="flex-grow: 1;"></div>
-        <button onclick="exportExcel()" class="btn-excel">Excel</button>
-        <button onclick="exportPDF()" class="btn-pdf">PDF</button>
+        <button onclick="exportExcel()" class="btn-excel">📥 Export Excel</button>
+        <button onclick="exportPDF()" class="btn-pdf">📄 Export PDF</button>
     </div>
 
     <div class="charts-row">
-        <div class="chart-box"><canvas id="lineChart"></canvas></div>
-        <div class="chart-box"><canvas id="doughnutChart"></canvas></div>
+        <div class="chart-box">
+            <canvas id="lineChart"></canvas>
+        </div>
+        <div class="chart-box">
+            <canvas id="doughnutChart"></canvas>
+        </div>
     </div>
 
     <div class="data-table-box">
         <table class="data-table">
             <thead>
-                <tr><th>Tanggal</th><th>Nama</th><th>Jam Masuk</th><th>Jam Pulang</th><th>Status</th></tr>
+                <tr>
+                    <th>Tanggal</th>
+                    <th>Nama Karyawan</th>
+                    <th>Jam Masuk</th>
+                    <th>Jam Pulang</th>
+                    <th>Status</th>
+                </tr>
             </thead>
-            <tbody id="dataBody"></tbody>
+            <tbody id="dataBody">
+                <tr><td colspan="5" style="text-align:center; padding: 20px;">Memuat data...</td></tr>
+            </tbody>
         </table>
     </div>
 </div>
 
 <script>
-    // --- GANTI DENGAN KREDENSIAL SUPABASE ANDA ---
+    // ============================================
+    // 1. KONFIGURASI SUPABASE
+    // ============================================
+    // GANTI DENGAN URL & KEY PROYEK ANDA
     const SUPABASE_URL = 'https://yoxipkgpxhavmxknlwft.supabase.co';
-    const SUPABASE_KEY = 'sb_publishable_nGr7Fit3oX6dF4WcNPOq9g_AFpTcezy';
+    const SUPABASE_KEY = 'sb_publishable_nGr7Fit3oX6dF4WcNPOq9g_AFpTcezy'; 
+    
+    // Inisialisasi Client
     const client = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-    // --- LOGIC JAM REALTIME ---
-    setInterval(() => document.getElementById('clock').innerText = new Date().toLocaleTimeString('id-ID'), 1000);
+    // ============================================
+    // 2. JAM REALTIME
+    // ============================================
+    function updateClock() {
+        const now = new Date();
+        document.getElementById('clock').innerText = now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    }
+    setInterval(updateClock, 1000);
+    updateClock();
 
-    // --- 1. LOGIC PENGATURAN JADWAL (MULTI HARI) ---
+    // ============================================
+    // 3. LOGIC PENGATURAN JADWAL (MULTI HARI)
+    // ============================================
     async function loadSettings() {
-        // Ambil data dan urutkan berdasarkan hari_id (1=Senin)
-        const { data, error } = await client.from('pengaturan_absen').select('*').order('hari_id', {ascending: true});
+        // Ambil data dan urutkan berdasarkan hari_id (1=Senin, 7=Minggu)
+        const { data, error } = await client
+            .from('pengaturan_absen')
+            .select('*')
+            .order('hari_id', {ascending: true});
+
+        if (error) {
+            console.error("Error load settings:", error);
+            alert("Gagal memuat jadwal.");
+            return;
+        }
+
         const tbody = document.getElementById('settingsBody');
         tbody.innerHTML = '';
 
         data.forEach(row => {
             const isLibur = row.is_libur ? 'checked' : '';
+            // Kita simpan ID row di atribut data-id
             const tr = `
                 <tr data-id="${row.id}">
-                    <td style="font-weight:bold;">${row.hari}</td>
-                    <td><input type="time" class="inp-mm" value="${row.mulai_masuk}"></td>
-                    <td><input type="time" class="inp-bt" value="${row.batas_terlambat}"></td>
-                    <td><input type="time" class="inp-am" value="${row.akhir_masuk}"></td>
-                    <td><input type="time" class="inp-mk" value="${row.mulai_keluar}"></td>
-                    <td><input type="time" class="inp-ak" value="${row.akhir_keluar}"></td>
-                    <td style="text-align:center;"><input type="checkbox" class="inp-libur" ${isLibur}></td>
+                    <td style="font-weight:bold; color: var(--primary);">${row.hari}</td>
+                    <td><input type="time" class="inp-mm" value="${row.mulai_masuk || ''}"></td>
+                    <td><input type="time" class="inp-bt" value="${row.batas_terlambat || ''}"></td>
+                    <td><input type="time" class="inp-am" value="${row.akhir_masuk || ''}"></td>
+                    <td><input type="time" class="inp-mk" value="${row.mulai_keluar || ''}"></td>
+                    <td><input type="time" class="inp-ak" value="${row.akhir_keluar || ''}"></td>
+                    <td style="text-align:center;"><input type="checkbox" class="inp-libur" ${isLibur} style="width: 20px; height: 20px;"></td>
                 </tr>
             `;
             tbody.innerHTML += tr;
         });
     }
 
-   async function saveAllSettings() {
+    async function saveAllSettings() {
         const rows = document.querySelectorAll('#settingsBody tr');
         let hasError = false;
+        const btn = document.querySelector('.btn-save-settings');
+        
+        btn.innerText = "Menyimpan...";
+        btn.disabled = true;
 
         // Loop untuk memproses setiap baris satu per satu
         for (const row of rows) {
             const id = row.getAttribute('data-id');
-            
-            // Siapkan data yang akan di-update
+            if(!id) continue;
+
             const updateData = {
-                mulai_masuk: row.querySelector('.inp-mm').value,
-                batas_terlambat: row.querySelector('.inp-bt').value,
-                akhir_masuk: row.querySelector('.inp-am').value,
-                mulai_keluar: row.querySelector('.inp-mk').value,
-                akhir_keluar: row.querySelector('.inp-ak').value,
+                mulai_masuk: row.querySelector('.inp-mm').value || null,
+                batas_terlambat: row.querySelector('.inp-bt').value || null,
+                akhir_masuk: row.querySelector('.inp-am').value || null,
+                mulai_keluar: row.querySelector('.inp-mk').value || null,
+                akhir_keluar: row.querySelector('.inp-ak').value || null,
                 is_libur: row.querySelector('.inp-libur').checked
             };
 
-            // GANTI DARI UPSERT KE UPDATE
-            // Menggunakan .update() tidak mewajibkan kita mengirim kolom 'hari' lagi
+            // Update ke database
             const { error } = await client
                 .from('pengaturan_absen')
                 .update(updateData)
@@ -177,96 +249,226 @@
 
             if (error) {
                 console.error("Gagal update ID " + id, error);
-                alert("Gagal menyimpan jadwal: " + error.message);
                 hasError = true;
-                break; // Berhenti jika ada error
             }
         }
 
+        btn.disabled = false;
+        btn.innerText = "SIMPAN SEMUA PERUBAHAN JADWAL";
+
         if (!hasError) {
             alert('✅ Semua jadwal berhasil disimpan!');
-            // Refresh halaman agar data terbaru termuat ulang
-            location.reload();
+            // Tidak perlu reload, data di input sudah terbaru
+        } else {
+            alert('⚠️ Ada sebagian data yang gagal disimpan. Cek koneksi.');
         }
     }
 
-    // --- 2. LOGIC DASHBOARD DATA (SAMA SEPERTI SEBELUMNYA) ---
+    // ============================================
+    // 4. LOGIC DASHBOARD & CHART
+    // ============================================
     let currentData = [];
-    let lineChart, doughnutChart;
+    let lineChartInstance, doughnutChartInstance;
 
     async function fetchData(range, btn) {
-        if(btn) { document.querySelectorAll('.btn-filter').forEach(b => b.classList.remove('active')); btn.classList.add('active'); }
+        // Update UI tombol
+        if(btn) { 
+            document.querySelectorAll('.btn-filter').forEach(b => b.classList.remove('active')); 
+            btn.classList.add('active'); 
+        }
         
-        let query = client.from('presensi').select('*, karyawan(nama)');
+        // Tampilkan loading di tabel
+        document.getElementById('dataBody').innerHTML = '<tr><td colspan="5" style="text-align:center;">Mengambil data...</td></tr>';
+
+        // Query Dasar
+        let query = client
+            .from('presensi')
+            .select('*, karyawan(nama, divisi)');
+        
         const now = new Date();
+        
+        // Filter Waktu
+        if(range === 'hari') {
+            const today = now.toISOString().split('T')[0];
+            query = query.eq('tanggal', today);
+        } else if(range === 'minggu') {
+            const oneWeekAgo = new Date();
+            oneWeekAgo.setDate(now.getDate() - 7);
+            query = query.gte('tanggal', oneWeekAgo.toISOString());
+        } else if(range === 'bulan') {
+            const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+            query = query.gte('tanggal', firstDayOfMonth.toISOString());
+        }
 
-        if(range === 'hari') query = query.eq('tanggal', now.toISOString().split('T')[0]);
-        if(range === 'minggu') query = query.gte('tanggal', new Date(now.setDate(now.getDate() - 7)).toISOString());
-        if(range === 'bulan') query = query.gte('tanggal', new Date(now.getFullYear(), now.getMonth(), 1).toISOString());
+        const { data, error } = await query.order('jam_masuk', {ascending: false});
 
-        const { data } = await query.order('tanggal', {ascending: true});
+        if(error) {
+            console.error(error);
+            alert("Gagal mengambil data presensi.");
+            return;
+        }
+
         currentData = data || [];
         renderTable(currentData);
         renderCharts(currentData);
+        
+        // Ambil total karyawan untuk statistik
+        const { count } = await client.from('karyawan').select('*', { count: 'exact', head: true });
+        document.getElementById('statTotalKaryawan').innerText = count || 0;
     }
 
     function renderTable(data) {
         const tbody = document.getElementById('dataBody');
         tbody.innerHTML = '';
+        
         let hadir = 0, telat = 0;
 
-        [...data].reverse().forEach(d => {
+        if(data.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding: 20px;">Tidak ada data pada periode ini.</td></tr>';
+            document.getElementById('statHadir').innerText = 0;
+            document.getElementById('statTelat').innerText = 0;
+            return;
+        }
+
+        data.forEach(d => {
+            // Hitung Stats
             hadir++;
-            if(d.status === 'Terlambat') telat++;
-            const statusClass = d.status === 'Tepat Waktu' ? 'st-Tepat-Waktu' : 'st-Terlambat';
-            tbody.innerHTML += `
+            if(d.status_kehadiran === 'Terlambat') telat++;
+
+            // Tentukan Class Badge
+            let statusClass = 'st-Tepat-Waktu';
+            if(d.status_kehadiran === 'Terlambat') statusClass = 'st-Terlambat';
+            else if(d.status_kehadiran === 'Izin') statusClass = 'st-Izin';
+
+            const nama = d.karyawan ? d.karyawan.nama : 'Unknown';
+            
+            const tr = `
                 <tr>
                     <td>${d.tanggal}</td>
-                    <td>${d.karyawan.nama}</td>
+                    <td><b>${nama}</b></td>
                     <td>${d.jam_masuk || '-'}</td>
                     <td>${d.jam_keluar || '-'}</td>
-                    <td><span class="status-badge ${statusClass}">${d.status}</span></td>
+                    <td><span class="status-badge ${statusClass}">${d.status_kehadiran || '-'}</span></td>
                 </tr>`;
+            tbody.innerHTML += tr;
         });
+
         document.getElementById('statHadir').innerText = hadir;
         document.getElementById('statTelat').innerText = telat;
     }
 
     function renderCharts(data) {
-        const dates = {};
+        // 1. Data untuk Line Chart (Tren Kehadiran per Tanggal)
+        const dateCounts = {};
+        data.forEach(d => {
+            dateCounts[d.tanggal] = (dateCounts[d.tanggal] || 0) + 1;
+        });
+        
+        // Sort tanggal agar urut di grafik
+        const sortedDates = Object.keys(dateCounts).sort();
+        const lineData = sortedDates.map(date => dateCounts[date]);
+
+        // 2. Data untuk Doughnut Chart (Status)
         let tepat = 0, telat = 0;
         data.forEach(d => {
-            dates[d.tanggal] = (dates[d.tanggal] || 0) + 1;
-            if(d.status === 'Terlambat') telat++; else tepat++;
+            if(d.status_kehadiran === 'Terlambat') telat++;
+            else tepat++;
         });
 
-        if(lineChart) lineChart.destroy();
-        if(doughnutChart) doughnutChart.destroy();
+        // Hancurkan chart lama jika ada agar tidak numpuk
+        if(lineChartInstance) lineChartInstance.destroy();
+        if(doughnutChartInstance) doughnutChartInstance.destroy();
 
-        lineChart = new Chart(document.getElementById('lineChart'), {
+        // Render Line Chart
+        const ctxLine = document.getElementById('lineChart').getContext('2d');
+        lineChartInstance = new Chart(ctxLine, {
             type: 'line',
             data: {
-                labels: Object.keys(dates),
-                datasets: [{ label: 'Hadir', data: Object.values(dates), borderColor: '#2563eb', tension: 0.3, fill: true }]
+                labels: sortedDates,
+                datasets: [{
+                    label: 'Jumlah Kehadiran',
+                    data: lineData,
+                    borderColor: '#2563eb',
+                    backgroundColor: 'rgba(37, 99, 235, 0.1)',
+                    tension: 0.4,
+                    fill: true
+                }]
             },
-            options: { maintainAspectRatio: false }
+            options: { maintainAspectRatio: false, plugins: { legend: { display: false }, title: { display: true, text: 'Tren Kehadiran' } } }
         });
 
-        doughnutChart = new Chart(document.getElementById('doughnutChart'), {
+        // Render Doughnut Chart
+        const ctxDoughnut = document.getElementById('doughnutChart').getContext('2d');
+        doughnutChartInstance = new Chart(ctxDoughnut, {
             type: 'doughnut',
             data: {
                 labels: ['Tepat Waktu', 'Terlambat'],
-                datasets: [{ data: [tepat, telat], backgroundColor: ['#22c55e', '#f59e0b'] }]
+                datasets: [{
+                    data: [tepat, telat],
+                    backgroundColor: ['#16a34a', '#dc2626']
+                }]
             },
-            options: { maintainAspectRatio: false }
+            options: { maintainAspectRatio: false, plugins: { title: { display: true, text: 'Proporsi Ketepatan Waktu' } } }
         });
     }
 
-    function exportExcel() { /* Kode Excel sama seperti sebelumnya */ }
-    function exportPDF() { /* Kode PDF sama seperti sebelumnya */ }
+    // ============================================
+    // 5. FITUR EXPORT (EXCEL & PDF)
+    // ============================================
+    function exportExcel() {
+        if(currentData.length === 0) { alert("Tidak ada data untuk diexport"); return; }
 
-    // Init
+        // Format data agar rapi di Excel (Flat Data)
+        const exportData = currentData.map(d => ({
+            Tanggal: d.tanggal,
+            Nama: d.karyawan ? d.karyawan.nama : 'Unknown',
+            Divisi: d.karyawan ? d.karyawan.divisi : '-',
+            Jam_Masuk: d.jam_masuk,
+            Jam_Keluar: d.jam_keluar,
+            Status: d.status_kehadiran
+        }));
+
+        const ws = XLSX.utils.json_to_sheet(exportData);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "Laporan Presensi");
+        XLSX.writeFile(wb, "Laporan_Presensi_RFID.xlsx");
+    }
+
+    function exportPDF() {
+        if(currentData.length === 0) { alert("Tidak ada data untuk diexport"); return; }
+
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+
+        doc.text("Laporan Presensi Karyawan", 14, 15);
+        doc.setFontSize(10);
+        doc.text(`Dicetak pada: ${new Date().toLocaleString()}`, 14, 22);
+
+        // Format data untuk AutoTable
+        const tableBody = currentData.map(d => [
+            d.tanggal,
+            d.karyawan ? d.karyawan.nama : 'Unknown',
+            d.jam_masuk || '-',
+            d.jam_keluar || '-',
+            d.status_kehadiran || '-'
+        ]);
+
+        doc.autoTable({
+            head: [['Tanggal', 'Nama', 'Masuk', 'Pulang', 'Status']],
+            body: tableBody,
+            startY: 30,
+            theme: 'grid',
+            headStyles: { fillColor: [37, 99, 235] } // Warna biru
+        });
+
+        doc.save("Laporan_Presensi.pdf");
+    }
+
+    // ============================================
+    // INIT LOAD
+    // ============================================
     loadSettings();
+    // Default load hari ini
     fetchData('hari', document.querySelector('.btn-filter'));
 
 </script>
