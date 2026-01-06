@@ -270,27 +270,36 @@
     let currentData = [];
     let lineChartInstance, doughnutChartInstance;
 
+    // Variabel Global untuk menyimpan batas telat (Default 08:15 jika DB gagal load)
+    let BATAS_TELAT_GLOBAL = "08:15:00"; 
+
     async function fetchData(range, btn) {
-        // Update UI tombol
         if(btn) { 
             document.querySelectorAll('.btn-filter').forEach(b => b.classList.remove('active')); 
             btn.classList.add('active'); 
         }
         
-        // Tampilkan loading di tabel
         document.getElementById('dataBody').innerHTML = '<tr><td colspan="5" style="text-align:center;">Mengambil data...</td></tr>';
 
-        // Query Dasar
-        let query = client
-            .from('presensi')
-            .select('*, karyawan(nama, divisi)');
-        
+        // 1. AMBIL JADWAL HARI INI DULU (Untuk logika terlambat)
+        const hariIniID = new Date().getDay() || 7; // 1=Senin, 7=Minggu
+        const { data: jadwal } = await client
+            .from('pengaturan_absen')
+            .select('batas_terlambat')
+            .eq('hari_id', hariIniID)
+            .single();
+            
+        if(jadwal && jadwal.batas_terlambat) {
+            BATAS_TELAT_GLOBAL = jadwal.batas_terlambat;
+        }
+
+        // 2. QUERY DATA PRESENSI
+        let query = client.from('presensi').select('*, karyawan(nama, divisi)');
         const now = new Date();
+        const todayStr = now.toISOString().split('T')[0];
         
-        // Filter Waktu
         if(range === 'hari') {
-            const today = now.toISOString().split('T')[0];
-            query = query.eq('tanggal', today);
+            query = query.eq('tanggal', todayStr);
         } else if(range === 'minggu') {
             const oneWeekAgo = new Date();
             oneWeekAgo.setDate(now.getDate() - 7);
@@ -303,16 +312,14 @@
         const { data, error } = await query.order('jam_masuk', {ascending: false});
 
         if(error) {
-            console.error(error);
-            alert("Gagal mengambil data presensi.");
-            return;
+            console.error(error); return;
         }
 
+        // Render ulang dengan data yang baru
         currentData = data || [];
         renderTable(currentData);
         renderCharts(currentData);
         
-        // Ambil total karyawan untuk statistik
         const { count } = await client.from('karyawan').select('*', { count: 'exact', head: true });
         document.getElementById('statTotalKaryawan').innerText = count || 0;
     }
@@ -324,58 +331,59 @@
         let hadir = 0, telat = 0;
 
         if(!data || data.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding: 20px;">Tidak ada data pada periode ini.</td></tr>';
-            document.getElementById('statHadir').innerText = 0;
-            document.getElementById('statTelat').innerText = 0;
+            tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding: 20px;">Tidak ada data.</td></tr>';
             return;
         }
 
         data.forEach(d => {
-            // --- LOGIKA PERBAIKAN STATUS ---
-            let textStatus = d.status_kehadiran;
+            // --- LOGIKA OTOMATIS STATUS ---
+            // Ambil status dari DB, jika kosong, kita hitung sendiri
+            let realStatus = d.status_kehadiran;
             let jamMasuk = d.jam_masuk;
 
-            // 1. Jika status di database kosong tapi ada jam masuk, anggap "Hadir"
-            if (!textStatus && jamMasuk) {
-                // Opsional: Logika sederhana (misal lewat jam 08:00 dianggap telat)
-                // Anda bisa sesuaikan jam batas ini manual di sini jika mau cepat
-                if (jamMasuk > "08:15:00") {
-                    textStatus = "Terlambat";
+            // Jika status kosong DAN ada jam masuk, lakukan perhitungan
+            if (!realStatus && jamMasuk) {
+                // Bandingkan Jam Masuk vs Batas Telat Global
+                // String comparison "08:30:00" > "08:15:00" bekerja dengan baik di JS
+                if (jamMasuk > BATAS_TELAT_GLOBAL) {
+                    realStatus = "Terlambat";
                 } else {
-                    textStatus = "Tepat Waktu";
+                    realStatus = "Tepat Waktu";
                 }
-            } else if (!textStatus) {
-                textStatus = "-";
+            } else if (!realStatus) {
+                realStatus = "-";
             }
 
-            // 2. Format Jam (Hilangkan detik milidetik yang panjang)
-            // Dari "15:49:13.77961" menjadi "15:49"
-            let showMasuk = jamMasuk ? jamMasuk.split('.')[0] : '-';
-            let showPulang = d.jam_keluar ? d.jam_keluar.split('.')[0] : '-';
-
-            // 3. Hitung Statistik
+            // --- HITUNG STATISTIK ---
             hadir++;
-            if(textStatus === 'Terlambat') telat++;
+            if(realStatus === 'Terlambat') telat++;
 
-            // 4. Tentukan Warna Badge
-            let statusClass = 'st-Tepat-Waktu'; // Default Hijau
-            if(textStatus === 'Terlambat') statusClass = 'st-Terlambat'; // Merah
-            else if(textStatus === 'Izin') statusClass = 'st-Izin'; // Kuning
-            else if(textStatus === '-') statusClass = ''; // Polos jika kosong
+            // --- TENTUKAN WARNA BADGE ---
+            let badgeClass = 'st-Tepat-Waktu'; // Default Hijau
+            if(realStatus === 'Terlambat') {
+                badgeClass = 'st-Terlambat'; // Merah
+            } else if(realStatus === 'Izin' || realStatus === 'Sakit') {
+                badgeClass = 'st-Izin'; // Kuning
+            }
 
-            const nama = d.karyawan ? d.karyawan.nama : 'Unknown';
-            
+            // --- FORMAT JAM AGAR RAPI (Hapus detik mikro) ---
+            // Contoh: "15:49:13.779" -> "15:49"
+            let showMasuk = jamMasuk ? jamMasuk.substring(0, 5) : '-';
+            let showPulang = d.jam_keluar ? d.jam_keluar.substring(0, 5) : '-';
+            let namaKaryawan = d.karyawan ? d.karyawan.nama : 'Unknown';
+
             const tr = `
                 <tr>
                     <td>${d.tanggal}</td>
-                    <td><b>${nama}</b></td>
+                    <td><b>${namaKaryawan}</b></td>
                     <td>${showMasuk}</td>
                     <td>${showPulang}</td>
-                    <td><span class="status-badge ${statusClass}">${textStatus}</span></td>
+                    <td><span class="status-badge ${badgeClass}">${realStatus}</span></td>
                 </tr>`;
             tbody.innerHTML += tr;
         });
 
+        // Update Angka Statistik di Atas
         document.getElementById('statHadir').innerText = hadir;
         document.getElementById('statTelat').innerText = telat;
     }
