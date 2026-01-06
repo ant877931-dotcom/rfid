@@ -1,0 +1,142 @@
+#include <WiFi.h>
+#include <HTTPClient.h>
+#include <SPI.h>
+#include <MFRC522.h>
+#include <Wire.h>
+#include <LiquidCrystal_I2C.h>
+
+// --- 1. KONFIGURASI WIFI & SUPABASE ---
+const char* ssid = "NAMA_WIFI_ANDA";
+const char* password = "PASSWORD_WIFI_ANDA";
+
+// Pastikan URL diakhiri dengan /rest/v1/rpc/proses_presensi
+const char* supabase_url = "https://yoxipkgpxhavmxknlwft.supabase.co/rest/v1/rpc/proses_presensi";
+const char* supabase_key = "sb_publishable_nGr7Fit3oX6dF4WcNPOq9g_AFpTcezy";
+
+// --- 2. KONFIGURASI PIN ---
+#define SS_PIN  5   // SDA pada RFID
+#define RST_PIN 22  // RST pada RFID
+#define BUZZER  2   // Pin Buzzer
+
+MFRC522 rfid(SS_PIN, RST_PIN);
+LiquidCrystal_I2C lcd(0x27, 16, 2);
+
+void setup() {
+  Serial.begin(115200);
+  SPI.begin();
+  rfid.PCD_Init();
+  
+  pinMode(BUZZER, OUTPUT);
+  
+  lcd.init();
+  lcd.backlight();
+  lcd.setCursor(0, 0);
+  lcd.print("WiFi Connecting");
+
+  // Menghubungkan ke WiFi
+  WiFi.begin(ssid, password);
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(500);
+    Serial.print(".");
+  }
+
+  Serial.println("\nWiFi Connected");
+  lcd.clear();
+  lcd.print("Sistem Online");
+  delay(1500);
+}
+
+void loop() {
+  // Tampilan Standby
+  lcd.setCursor(0, 0);
+  lcd.print("Tempelkan Kartu ");
+  lcd.setCursor(0, 1);
+  lcd.print("Siap Absensi... ");
+
+  // Cek apakah ada kartu baru ditempelkan
+  if (!rfid.PICC_IsNewCardPresent() || !rfid.PICC_ReadCardSerial()) {
+    return;
+  }
+
+  // Membaca UID kartu RFID
+  String uid = "";
+  for (byte i = 0; i < rfid.uid.size; i++) {
+    uid += String(rfid.uid.uidByte[i] < 0x10 ? "0" : "");
+    uid += String(rfid.uid.uidByte[i], HEX);
+  }
+  uid.toUpperCase();
+  
+  Serial.println("UID Terdeteksi: " + uid);
+  
+  // Tampilkan proses di LCD
+  lcd.clear();
+  lcd.print("Mengecek Kartu..");
+  
+  // Kirim data ke Supabase
+  kirimDataKeSupabase(uid);
+
+  // Stop pembacaan kartu agar tidak terbaca berulang
+  rfid.PICC_HaltA();
+  rfid.PCD_StopCrypto1();
+}
+
+void kirimDataKeSupabase(String uid) {
+  if (WiFi.status() == WL_CONNECTED) {
+    HTTPClient http;
+    http.begin(supabase_url);
+    
+    // Header wajib untuk otentikasi Supabase
+    http.addHeader("Content-Type", "application/json");
+    http.addHeader("apikey", supabase_key);
+    http.addHeader("Authorization", "Bearer " + String(supabase_key));
+
+    // Membuat JSON payload (target_uid sesuai nama variabel di SQL Function)
+    String jsonPayload = "{\"target_uid\": \"" + uid + "\"}";
+    
+    // Mengirim POST request
+    int httpResponseCode = http.POST(jsonPayload);
+
+    if (httpResponseCode > 0) {
+      String response = http.getString();
+      response.replace("\"", ""); // Membersihkan tanda kutip dari respon teks
+      
+      Serial.println("Status HTTP: " + String(httpResponseCode));
+      Serial.println("Respon Database: " + response);
+
+      // Tampilkan hasil di LCD
+      lcd.clear();
+      lcd.setCursor(0, 0);
+      lcd.print("Hasil:");
+      lcd.setCursor(0, 1);
+      lcd.print(response);
+
+      // Logika Notifikasi Suara (Buzzer)
+      if (response == "Berhasil Masuk" || response == "Berhasil Pulang") {
+        digitalWrite(BUZZER, HIGH); delay(200); digitalWrite(BUZZER, LOW); 
+      } 
+      else if (response == "Terlambat") {
+        // Bunyi putus-putus 3 kali untuk terlambat
+        for(int i=0; i<3; i++) {
+          digitalWrite(BUZZER, HIGH); delay(100); digitalWrite(BUZZER, LOW); delay(100);
+        }
+      } 
+      else {
+        // Bunyi panjang untuk kartu tidak terdaftar atau bukan jam absen
+        digitalWrite(BUZZER, HIGH); delay(1000); digitalWrite(BUZZER, LOW);
+      }
+    } 
+    else {
+      lcd.clear();
+      lcd.print("Error Koneksi");
+      Serial.println("Error pada HTTP request");
+    }
+    
+    http.end();
+  } 
+  else {
+    lcd.clear();
+    lcd.print("WiFi Terputus");
+  }
+  
+  delay(3000); // Jeda sebelum kembali ke tampilan standby
+}
