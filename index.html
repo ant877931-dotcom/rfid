@@ -165,124 +165,35 @@
     // ============================================
     // 1. KONFIGURASI SUPABASE
     // ============================================
-    // GANTI DENGAN URL & KEY PROYEK ANDA
     const SUPABASE_URL = 'https://yoxipkgpxhavmxknlwft.supabase.co';
     const SUPABASE_KEY = 'sb_publishable_nGr7Fit3oX6dF4WcNPOq9g_AFpTcezy'; 
-    
-    // Inisialisasi Client
     const client = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
     // ============================================
-    // 2. JAM REALTIME
-    // ============================================
-    function updateClock() {
-        const now = new Date();
-        document.getElementById('clock').innerText = now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-    }
-    setInterval(updateClock, 1000);
-    updateClock();
-
-    // ============================================
-    // 3. LOGIC PENGATURAN JADWAL (MULTI HARI)
-    // ============================================
-    async function loadSettings() {
-        // Ambil data dan urutkan berdasarkan hari_id (1=Senin, 7=Minggu)
-        const { data, error } = await client
-            .from('pengaturan_absen')
-            .select('*')
-            .order('hari_id', {ascending: true});
-
-        if (error) {
-            console.error("Error load settings:", error);
-            alert("Gagal memuat jadwal.");
-            return;
-        }
-
-        const tbody = document.getElementById('settingsBody');
-        tbody.innerHTML = '';
-
-        data.forEach(row => {
-            const isLibur = row.is_libur ? 'checked' : '';
-            // Kita simpan ID row di atribut data-id
-            const tr = `
-                <tr data-id="${row.id}">
-                    <td style="font-weight:bold; color: var(--primary);">${row.hari}</td>
-                    <td><input type="time" class="inp-mm" value="${row.mulai_masuk || ''}"></td>
-                    <td><input type="time" class="inp-bt" value="${row.batas_terlambat || ''}"></td>
-                    <td><input type="time" class="inp-am" value="${row.akhir_masuk || ''}"></td>
-                    <td><input type="time" class="inp-mk" value="${row.mulai_keluar || ''}"></td>
-                    <td><input type="time" class="inp-ak" value="${row.akhir_keluar || ''}"></td>
-                    <td style="text-align:center;"><input type="checkbox" class="inp-libur" ${isLibur} style="width: 20px; height: 20px;"></td>
-                </tr>
-            `;
-            tbody.innerHTML += tr;
-        });
-    }
-
-    async function saveAllSettings() {
-        const rows = document.querySelectorAll('#settingsBody tr');
-        let hasError = false;
-        const btn = document.querySelector('.btn-save-settings');
-        
-        btn.innerText = "Menyimpan...";
-        btn.disabled = true;
-
-        // Loop untuk memproses setiap baris satu per satu
-        for (const row of rows) {
-            const id = row.getAttribute('data-id');
-            if(!id) continue;
-
-            const updateData = {
-                mulai_masuk: row.querySelector('.inp-mm').value || null,
-                batas_terlambat: row.querySelector('.inp-bt').value || null,
-                akhir_masuk: row.querySelector('.inp-am').value || null,
-                mulai_keluar: row.querySelector('.inp-mk').value || null,
-                akhir_keluar: row.querySelector('.inp-ak').value || null,
-                is_libur: row.querySelector('.inp-libur').checked
-            };
-
-            // Update ke database
-            const { error } = await client
-                .from('pengaturan_absen')
-                .update(updateData)
-                .eq('id', id);
-
-            if (error) {
-                console.error("Gagal update ID " + id, error);
-                hasError = true;
-            }
-        }
-
-        btn.disabled = false;
-        btn.innerText = "SIMPAN SEMUA PERUBAHAN JADWAL";
-
-        if (!hasError) {
-            alert('✅ Semua jadwal berhasil disimpan!');
-            // Tidak perlu reload, data di input sudah terbaru
-        } else {
-            alert('⚠️ Ada sebagian data yang gagal disimpan. Cek koneksi.');
-        }
-    }
-
-    // ============================================
-    // 4. LOGIC DASHBOARD & CHART
+    // 2. VARIABEL GLOBAL
     // ============================================
     let currentData = [];
+    let BATAS_TELAT_GLOBAL = "08:15:00"; // Default fallback
     let lineChartInstance, doughnutChartInstance;
 
-    // Variabel Global untuk menyimpan batas telat (Default 08:15 jika DB gagal load)
-    let BATAS_TELAT_GLOBAL = "08:15:00"; 
+    // JAM REALTIME
+    setInterval(() => {
+        document.getElementById('clock').innerText = new Date().toLocaleTimeString('id-ID');
+    }, 1000);
 
+    // ============================================
+    // 3. LOGIC UTAMA (Fetch & Process)
+    // ============================================
     async function fetchData(range, btn) {
         if(btn) { 
             document.querySelectorAll('.btn-filter').forEach(b => b.classList.remove('active')); 
             btn.classList.add('active'); 
         }
         
-        document.getElementById('dataBody').innerHTML = '<tr><td colspan="5" style="text-align:center;">Mengambil data...</td></tr>';
+        document.getElementById('dataBody').innerHTML = '<tr><td colspan="5" style="text-align:center;">Memuat data...</td></tr>';
 
-        // 1. AMBIL JADWAL HARI INI DULU (Untuk logika terlambat)
-        const hariIniID = new Date().getDay() || 7; // 1=Senin, 7=Minggu
+        // A. AMBIL BATAS TELAT HARI INI DARI DB
+        const hariIniID = new Date().getDay() || 7; 
         const { data: jadwal } = await client
             .from('pengaturan_absen')
             .select('batas_terlambat')
@@ -293,7 +204,7 @@
             BATAS_TELAT_GLOBAL = jadwal.batas_terlambat;
         }
 
-        // 2. QUERY DATA PRESENSI
+        // B. QUERY DATA PRESENSI
         let query = client.from('presensi').select('*, karyawan(nama, divisi)');
         const now = new Date();
         const todayStr = now.toISOString().split('T')[0];
@@ -311,124 +222,116 @@
 
         const { data, error } = await query.order('jam_masuk', {ascending: false});
 
-        if(error) {
-            console.error(error); return;
-        }
+        if(error) { console.error(error); return; }
 
-        // Render ulang dengan data yang baru
-        currentData = data || [];
+        // C. PROSES DATA (SINKRONISASI LOGIC)
+        // Kita hitung status DI SINI agar Table & Chart pakai data yang sama persis
+        const processedData = (data || []).map(d => {
+            let finalStatus = d.status_kehadiran;
+            
+            // Logic Otomatis: Jika status DB kosong, hitung berdasarkan jam
+            if (!finalStatus && d.jam_masuk) {
+                if (d.jam_masuk > BATAS_TELAT_GLOBAL) {
+                    finalStatus = 'Terlambat';
+                } else {
+                    finalStatus = 'Tepat Waktu';
+                }
+            } else if (!finalStatus) {
+                finalStatus = '-';
+            }
+
+            return { 
+                ...d, 
+                computed_status: finalStatus // Simpan hasil hitungan di field baru
+            };
+        });
+
+        currentData = processedData; // Simpan ke global
+        
+        // Render UI
         renderTable(currentData);
         renderCharts(currentData);
-        
-        const { count } = await client.from('karyawan').select('*', { count: 'exact', head: true });
-        document.getElementById('statTotalKaryawan').innerText = count || 0;
+        updateStats(currentData);
     }
 
+    // ============================================
+    // 4. RENDER TABLE
+    // ============================================
     function renderTable(data) {
         const tbody = document.getElementById('dataBody');
         tbody.innerHTML = '';
         
-        let hadir = 0, telat = 0;
-
-        if(!data || data.length === 0) {
+        if(data.length === 0) {
             tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding: 20px;">Tidak ada data.</td></tr>';
             return;
         }
 
         data.forEach(d => {
-            // --- LOGIKA OTOMATIS STATUS ---
-            // Ambil status dari DB, jika kosong, kita hitung sendiri
-            let realStatus = d.status_kehadiran;
-            let jamMasuk = d.jam_masuk;
+            // Gunakan 'computed_status' yang sudah dihitung di atas
+            let status = d.computed_status;
+            let badgeClass = 'st-Tepat-Waktu';
+            
+            if(status === 'Terlambat') badgeClass = 'st-Terlambat';
+            else if(status === 'Izin') badgeClass = 'st-Izin';
+            else if(status === '-') badgeClass = '';
 
-            // Jika status kosong DAN ada jam masuk, lakukan perhitungan
-            if (!realStatus && jamMasuk) {
-                // Bandingkan Jam Masuk vs Batas Telat Global
-                // String comparison "08:30:00" > "08:15:00" bekerja dengan baik di JS
-                if (jamMasuk > BATAS_TELAT_GLOBAL) {
-                    realStatus = "Terlambat";
-                } else {
-                    realStatus = "Tepat Waktu";
-                }
-            } else if (!realStatus) {
-                realStatus = "-";
-            }
-
-            // --- HITUNG STATISTIK ---
-            hadir++;
-            if(realStatus === 'Terlambat') telat++;
-
-            // --- TENTUKAN WARNA BADGE ---
-            let badgeClass = 'st-Tepat-Waktu'; // Default Hijau
-            if(realStatus === 'Terlambat') {
-                badgeClass = 'st-Terlambat'; // Merah
-            } else if(realStatus === 'Izin' || realStatus === 'Sakit') {
-                badgeClass = 'st-Izin'; // Kuning
-            }
-
-            // --- FORMAT JAM AGAR RAPI (Hapus detik mikro) ---
-            // Contoh: "15:49:13.779" -> "15:49"
-            let showMasuk = jamMasuk ? jamMasuk.substring(0, 5) : '-';
+            // Format Jam (Hapus detik mikro)
+            let showMasuk = d.jam_masuk ? d.jam_masuk.substring(0, 5) : '-';
             let showPulang = d.jam_keluar ? d.jam_keluar.substring(0, 5) : '-';
-            let namaKaryawan = d.karyawan ? d.karyawan.nama : 'Unknown';
-
+            let nama = d.karyawan ? d.karyawan.nama : 'Unknown';
+            
             const tr = `
                 <tr>
                     <td>${d.tanggal}</td>
-                    <td><b>${namaKaryawan}</b></td>
+                    <td><b>${nama}</b></td>
                     <td>${showMasuk}</td>
                     <td>${showPulang}</td>
-                    <td><span class="status-badge ${badgeClass}">${realStatus}</span></td>
+                    <td><span class="status-badge ${badgeClass}">${status}</span></td>
                 </tr>`;
             tbody.innerHTML += tr;
         });
-
-        // Update Angka Statistik di Atas
-        document.getElementById('statHadir').innerText = hadir;
-        document.getElementById('statTelat').innerText = telat;
     }
 
+    // ============================================
+    // 5. RENDER CHARTS (PERBAIKAN UTAMA DISINI)
+    // ============================================
     function renderCharts(data) {
-        // 1. Data untuk Line Chart (Tren Kehadiran per Tanggal)
+        // Line Chart Data
         const dateCounts = {};
-        data.forEach(d => {
-            dateCounts[d.tanggal] = (dateCounts[d.tanggal] || 0) + 1;
-        });
-        
-        // Sort tanggal agar urut di grafik
+        data.forEach(d => { dateCounts[d.tanggal] = (dateCounts[d.tanggal] || 0) + 1; });
         const sortedDates = Object.keys(dateCounts).sort();
         const lineData = sortedDates.map(date => dateCounts[date]);
 
-        // 2. Data untuk Doughnut Chart (Status)
+        // Doughnut Chart Data (Gunakan computed_status!)
         let tepat = 0, telat = 0;
         data.forEach(d => {
-            if(d.status_kehadiran === 'Terlambat') telat++;
-            else tepat++;
+            if(d.computed_status === 'Terlambat') telat++;
+            else if(d.computed_status === 'Tepat Waktu') tepat++;
+            // Status '-' atau 'Izin' bisa ditambahkan logic lain jika mau
         });
 
-        // Hancurkan chart lama jika ada agar tidak numpuk
+        // Reset Chart Lama
         if(lineChartInstance) lineChartInstance.destroy();
         if(doughnutChartInstance) doughnutChartInstance.destroy();
 
-        // Render Line Chart
+        // Buat Chart Baru
         const ctxLine = document.getElementById('lineChart').getContext('2d');
         lineChartInstance = new Chart(ctxLine, {
             type: 'line',
             data: {
                 labels: sortedDates,
                 datasets: [{
-                    label: 'Jumlah Kehadiran',
+                    label: 'Kehadiran',
                     data: lineData,
                     borderColor: '#2563eb',
                     backgroundColor: 'rgba(37, 99, 235, 0.1)',
-                    tension: 0.4,
-                    fill: true
+                    fill: true,
+                    tension: 0.4
                 }]
             },
-            options: { maintainAspectRatio: false, plugins: { legend: { display: false }, title: { display: true, text: 'Tren Kehadiran' } } }
+            options: { maintainAspectRatio: false, plugins: { legend: {display:false}, title: {display:true, text:'Tren Kehadiran'} } }
         });
 
-        // Render Doughnut Chart
         const ctxDoughnut = document.getElementById('doughnutChart').getContext('2d');
         doughnutChartInstance = new Chart(ctxDoughnut, {
             type: 'doughnut',
@@ -439,67 +342,95 @@
                     backgroundColor: ['#16a34a', '#dc2626']
                 }]
             },
-            options: { maintainAspectRatio: false, plugins: { title: { display: true, text: 'Proporsi Ketepatan Waktu' } } }
+            options: { maintainAspectRatio: false, plugins: { title: {display:true, text:'Proporsi Ketepatan Waktu'} } }
         });
     }
 
     // ============================================
-    // 5. FITUR EXPORT (EXCEL & PDF)
+    // 6. UPDATE STATS CARD
     // ============================================
+    async function updateStats(data) {
+        let hadir = data.length;
+        let telat = data.filter(d => d.computed_status === 'Terlambat').length;
+
+        document.getElementById('statHadir').innerText = hadir;
+        document.getElementById('statTelat').innerText = telat;
+
+        // Total Karyawan (Fetch terpisah)
+        const { count } = await client.from('karyawan').select('*', { count: 'exact', head: true });
+        document.getElementById('statTotalKaryawan').innerText = count || 0;
+    }
+
+    // ============================================
+    // 7. PENGATURAN & EXPORT
+    // ============================================
+    async function loadSettings() {
+        const { data, error } = await client.from('pengaturan_absen').select('*').order('hari_id', {ascending: true});
+        if (error) return;
+        const tbody = document.getElementById('settingsBody');
+        tbody.innerHTML = '';
+        data.forEach(row => {
+            const isLibur = row.is_libur ? 'checked' : '';
+            tbody.innerHTML += `
+                <tr data-id="${row.id}">
+                    <td style="font-weight:bold; color:var(--primary)">${row.hari}</td>
+                    <td><input type="time" class="inp-mm" value="${row.mulai_masuk||''}"></td>
+                    <td><input type="time" class="inp-bt" value="${row.batas_terlambat||''}"></td>
+                    <td><input type="time" class="inp-am" value="${row.akhir_masuk||''}"></td>
+                    <td><input type="time" class="inp-mk" value="${row.mulai_keluar||''}"></td>
+                    <td><input type="time" class="inp-ak" value="${row.akhir_keluar||''}"></td>
+                    <td style="text-align:center"><input type="checkbox" class="inp-libur" ${isLibur} style="width:18px;height:18px"></td>
+                </tr>`;
+        });
+    }
+
+    async function saveAllSettings() {
+        const rows = document.querySelectorAll('#settingsBody tr');
+        const btn = document.querySelector('.btn-save-settings');
+        btn.innerText = "Menyimpan..."; btn.disabled = true;
+        
+        for (const row of rows) {
+            const id = row.getAttribute('data-id');
+            if(!id) continue;
+            await client.from('pengaturan_absen').update({
+                mulai_masuk: row.querySelector('.inp-mm').value || null,
+                batas_terlambat: row.querySelector('.inp-bt').value || null,
+                akhir_masuk: row.querySelector('.inp-am').value || null,
+                mulai_keluar: row.querySelector('.inp-mk').value || null,
+                akhir_keluar: row.querySelector('.inp-ak').value || null,
+                is_libur: row.querySelector('.inp-libur').checked
+            }).eq('id', id);
+        }
+        btn.disabled = false; btn.innerText = "SIMPAN SEMUA PERUBAHAN JADWAL";
+        alert('✅ Jadwal berhasil disimpan!');
+    }
+
     function exportExcel() {
-        if(currentData.length === 0) { alert("Tidak ada data untuk diexport"); return; }
-
-        // Format data agar rapi di Excel (Flat Data)
+        if(currentData.length===0) return alert("Data kosong");
         const exportData = currentData.map(d => ({
-            Tanggal: d.tanggal,
-            Nama: d.karyawan ? d.karyawan.nama : 'Unknown',
-            Divisi: d.karyawan ? d.karyawan.divisi : '-',
-            Jam_Masuk: d.jam_masuk,
-            Jam_Keluar: d.jam_keluar,
-            Status: d.status_kehadiran
+            Tanggal: d.tanggal, Nama: d.karyawan?.nama, 
+            Masuk: d.jam_masuk, Pulang: d.jam_keluar, Status: d.computed_status
         }));
-
-        const ws = XLSX.utils.json_to_sheet(exportData);
         const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, "Laporan Presensi");
-        XLSX.writeFile(wb, "Laporan_Presensi_RFID.xlsx");
+        XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(exportData), "Laporan");
+        XLSX.writeFile(wb, "Laporan_Presensi.xlsx");
     }
 
     function exportPDF() {
-        if(currentData.length === 0) { alert("Tidak ada data untuk diexport"); return; }
-
+        if(currentData.length===0) return alert("Data kosong");
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF();
-
-        doc.text("Laporan Presensi Karyawan", 14, 15);
-        doc.setFontSize(10);
-        doc.text(`Dicetak pada: ${new Date().toLocaleString()}`, 14, 22);
-
-        // Format data untuk AutoTable
-        const tableBody = currentData.map(d => [
-            d.tanggal,
-            d.karyawan ? d.karyawan.nama : 'Unknown',
-            d.jam_masuk || '-',
-            d.jam_keluar || '-',
-            d.status_kehadiran || '-'
-        ]);
-
+        doc.text("Laporan Presensi", 14, 15);
         doc.autoTable({
             head: [['Tanggal', 'Nama', 'Masuk', 'Pulang', 'Status']],
-            body: tableBody,
-            startY: 30,
-            theme: 'grid',
-            headStyles: { fillColor: [37, 99, 235] } // Warna biru
+            body: currentData.map(d => [d.tanggal, d.karyawan?.nama, d.jam_masuk||'-', d.jam_keluar||'-', d.computed_status]),
+            startY: 25
         });
-
         doc.save("Laporan_Presensi.pdf");
     }
 
-    // ============================================
-    // INIT LOAD
-    // ============================================
+    // INIT
     loadSettings();
-    // Default load hari ini
     fetchData('hari', document.querySelector('.btn-filter'));
 
 </script>
