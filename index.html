@@ -226,37 +226,39 @@
         
         document.getElementById('info-batas').innerText = `Batas Keterlambatan Hari Ini: ${BATAS_TELAT_GLOBAL}`;
 
-        // B. QUERY PRESENSI DENGAN ZONA WAKTU LOKAL (FIX BUG PAGI HARI)
+        // B. QUERY PRESENSI (FIX TIMEZONE)
         let query = client.from('presensi').select('*, karyawan(nama)');
         
-        // --- PERBAIKAN ZONA WAKTU ---
-        // Menggunakan waktu lokal komputer, bukan UTC standar
+        // Buat string tanggal lokal (YYYY-MM-DD) berdasarkan waktu laptop user
         const today = new Date();
         const year = today.getFullYear();
         const month = String(today.getMonth() + 1).padStart(2, '0');
         const day = String(today.getDate()).padStart(2, '0');
-        const localDateStr = `${year}-${month}-${day}`; // Format YYYY-MM-DD sesuai lokal
+        const localDateStr = `${year}-${month}-${day}`;
         
         if(range === 'hari') {
+            // Mengambil data yang tanggalnya SAMA dengan tanggal lokal hari ini
             query = query.eq('tanggal', localDateStr);
         } else if(range === 'minggu') {
             const d = new Date(); d.setDate(d.getDate()-7);
-            query = query.gte('tanggal', d.toISOString());
+            const dStr = d.toISOString().split('T')[0];
+            query = query.gte('tanggal', dStr);
         } else if(range === 'bulan') {
             const first = new Date(year, today.getMonth(), 1);
-            query = query.gte('tanggal', first.toISOString());
+            const fStr = first.toISOString().split('T')[0];
+            query = query.gte('tanggal', fStr);
         }
 
         const { data, error } = await query.order('jam_masuk', {ascending: false});
         if(error) return console.error(error);
 
-        // C. HITUNG STATUS (PASTIKAN LOGIKA SAMA DENGAN SQL)
+        // C. HITUNG STATUS
         currentData = (data || []).map(d => {
             let status = 'Tepat Waktu';
             
             if(d.jam_masuk) {
-                // Logika: Jika jam masuk LEBIH BESAR dari batas -> Terlambat
-                // Artinya jika jam masuk LEBIH KECIL ATAU SAMA (Datang awal), status tetap 'Tepat Waktu'
+                // Logika Front-End harus sama dengan SQL:
+                // Jika Jam Masuk > Batas Telat -> Terlambat. Sisanya Tepat Waktu.
                 if(d.jam_masuk > BATAS_TELAT_GLOBAL) {
                     status = 'Terlambat';
                 }
@@ -270,7 +272,7 @@
     }
 
     // ============================================
-    // 4. FETCH TOTAL KARYAWAN (FITUR BARU)
+    // 4. FETCH TOTAL KARYAWAN
     // ============================================
     async function loadTotalKaryawan() {
         const { count, error } = await client
