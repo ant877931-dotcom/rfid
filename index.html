@@ -206,7 +206,7 @@
         }
         btn.disabled = false; btn.innerText = "SIMPAN SEMUA PERUBAHAN JADWAL";
         alert('✅ Pengaturan Berhasil Disimpan!');
-        location.reload(); // Reload agar BATAS_TELAT terupdate
+        location.reload(); 
     }
 
     // ============================================
@@ -226,27 +226,39 @@
         
         document.getElementById('info-batas').innerText = `Batas Keterlambatan Hari Ini: ${BATAS_TELAT_GLOBAL}`;
 
-        // B. QUERY PRESENSI
+        // B. QUERY PRESENSI DENGAN ZONA WAKTU LOKAL (FIX BUG PAGI HARI)
         let query = client.from('presensi').select('*, karyawan(nama)');
-        const now = new Date();
         
-        if(range === 'hari') query = query.eq('tanggal', now.toISOString().split('T')[0]);
-        else if(range === 'minggu') {
+        // Buat string tanggal lokal (bukan UTC)
+        const today = new Date();
+        const year = today.getFullYear();
+        const month = String(today.getMonth() + 1).padStart(2, '0');
+        const day = String(today.getDate()).padStart(2, '0');
+        const localDateStr = `${year}-${month}-${day}`;
+        
+        if(range === 'hari') {
+            query = query.eq('tanggal', localDateStr);
+        } else if(range === 'minggu') {
             const d = new Date(); d.setDate(d.getDate()-7);
             query = query.gte('tanggal', d.toISOString());
         } else if(range === 'bulan') {
-            const first = new Date(now.getFullYear(), now.getMonth(), 1);
+            const first = new Date(year, today.getMonth(), 1);
             query = query.gte('tanggal', first.toISOString());
         }
 
         const { data, error } = await query.order('jam_masuk', {ascending: false});
         if(error) return console.error(error);
 
-        // C. HITUNG ULANG STATUS (Agar Sinkron)
+        // C. HITUNG STATUS (PASTIKAN LOGIKA SAMA DENGAN SQL)
         currentData = (data || []).map(d => {
             let status = 'Tepat Waktu';
+            
             if(d.jam_masuk) {
-                if(d.jam_masuk > BATAS_TELAT_GLOBAL) status = 'Terlambat';
+                // Logika: Jika jam masuk LEBIH BESAR dari batas -> Terlambat
+                // Artinya jika jam masuk LEBIH KECIL ATAU SAMA (Datang awal), status tetap 'Tepat Waktu'
+                if(d.jam_masuk > BATAS_TELAT_GLOBAL) {
+                    status = 'Terlambat';
+                }
             } else {
                 status = '-';
             }
@@ -257,10 +269,9 @@
     }
 
     // ============================================
-    // 4. FETCH TOTAL KARYAWAN (FUNGSI BARU)
+    // 4. FETCH TOTAL KARYAWAN (FITUR BARU)
     // ============================================
     async function loadTotalKaryawan() {
-        // Mengambil jumlah baris di tabel karyawan
         const { count, error } = await client
             .from('karyawan')
             .select('*', { count: 'exact', head: true });
@@ -368,7 +379,7 @@
 
     // INIT
     loadSettings();
-    loadTotalKaryawan(); // Memuat jumlah karyawan
+    loadTotalKaryawan(); 
     fetchData('hari', document.querySelector('.btn-filter'));
 
 </script>
