@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Dashboard Presensi RFID - PT DAK</title>
     
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -15,21 +15,26 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
     
     <style>
+        /* TEMA WARNA PT DAK (CORPORATE BLUE) */
         :root { 
-            --primary: #4361ee; 
-            --secondary: #3f37c9;
-            --bg-body: #f3f4f6;
+            --primary: #0d47a1;      /* Biru Tua PT DAK */
+            --primary-light: #e3f2fd; /* Biru Sangat Muda untuk Background Icon */
+            --secondary: #002171;    /* Navy Gelap untuk Hover */
+            --accent: #f59e0b;       /* Orange untuk Aksen/Warning */
+            
+            --bg-body: #f4f6f8;      /* Abu-abu terang bersih */
             --bg-card: #ffffff;
-            --text-dark: #1e293b;
+            
+            --text-dark: #1e293b;    /* Hitam kebiruan */
             --text-grey: #64748b;
-            --success: #10b981;
-            --danger: #ef4444;
-            --warning: #f59e0b;
+            
+            --success: #1b8e48;      /* Hijau lebih gelap/serius */
+            --danger: #d32f2f;       /* Merah Bata */
         }
 
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Roboto', sans-serif; }
         
-        body { background-color: var(--bg-body); display: flex; min-height: 100vh; overflow-x: hidden; }
+        body { background-color: var(--bg-body); display: flex; min-height: 100vh; overflow-x: hidden; color: var(--text-dark); }
 
         /* --- SIDEBAR --- */
         .sidebar {
@@ -38,10 +43,11 @@
             padding: 20px;
             display: flex;
             flex-direction: column;
-            border-right: 1px solid #e2e8f0;
+            border-right: 1px solid #e0e0e0;
             position: fixed;
             height: 100%;
             z-index: 100;
+            box-shadow: 2px 0 5px rgba(0,0,0,0.03);
         }
 
         .logo-container {
@@ -54,36 +60,38 @@
         }
 
         .logo-container img {
-            width: 50px; /* Ukuran logo disesuaikan */
+            width: 50px;
             height: 50px;
             object-fit: contain;
-            border-radius: 8px; /* Sedikit lengkungan agar rapi */
         }
 
         .logo-container h2 {
-            font-size: 1.2rem;
-            color: var(--text-dark);
-            font-weight: 700;
+            font-size: 1.3rem;
+            color: var(--primary); /* Menggunakan warna corporate */
+            font-weight: 800;
+            letter-spacing: -0.5px;
         }
 
         .menu-item {
             display: flex;
             align-items: center;
-            gap: 12px;
-            padding: 12px 15px;
+            gap: 15px;
+            padding: 14px 20px;
             color: var(--text-grey);
             text-decoration: none;
-            border-radius: 10px;
+            border-radius: 8px;
             margin-bottom: 8px;
-            transition: 0.3s;
+            transition: all 0.3s ease;
             font-weight: 500;
             cursor: pointer;
+            border-left: 4px solid transparent;
         }
 
+        /* Menu Active Style: Blok Biru Corporate */
         .menu-item:hover, .menu-item.active {
-            background-color: var(--primary);
-            color: white;
-            box-shadow: 0 4px 10px rgba(67, 97, 238, 0.3);
+            background-color: var(--primary-light);
+            color: var(--primary);
+            border-left-color: var(--primary);
         }
 
         .menu-item i { width: 20px; text-align: center; }
@@ -103,25 +111,27 @@
             margin-bottom: 30px;
         }
 
-        .welcome-text h1 { font-size: 1.5rem; color: var(--text-dark); margin-bottom: 5px; }
+        .welcome-text h1 { font-size: 1.6rem; color: var(--text-dark); margin-bottom: 5px; font-weight: 700; }
         .welcome-text p { color: var(--text-grey); font-size: 0.9rem; }
 
         .header-actions {
             display: flex;
             align-items: center;
-            gap: 20px;
+            gap: 15px;
         }
 
         .clock-badge {
             background: white;
-            padding: 8px 15px;
-            border-radius: 50px;
+            padding: 10px 20px;
+            border-radius: 6px;
             font-weight: 600;
             color: var(--primary);
-            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            border: 1px solid #e0e0e0;
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 10px;
+            font-family: monospace;
+            font-size: 1rem;
         }
 
         /* --- STATS CARDS --- */
@@ -134,57 +144,39 @@
 
         .stat-card {
             background: var(--bg-card);
-            padding: 20px;
-            border-radius: 16px;
-            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.02);
+            padding: 25px;
+            border-radius: 12px;
+            border: 1px solid #e0e0e0; /* Border tipis profesional */
             display: flex;
             align-items: center;
             gap: 20px;
-            transition: transform 0.2s;
+            transition: transform 0.2s, box-shadow 0.2s;
         }
 
-        .stat-card:hover { transform: translateY(-5px); }
+        .stat-card:hover { 
+            transform: translateY(-3px); 
+            box-shadow: 0 10px 20px rgba(0,0,0,0.05);
+            border-color: var(--primary);
+        }
 
         .stat-icon {
-            width: 50px;
-            height: 50px;
-            border-radius: 12px;
+            width: 56px;
+            height: 56px;
+            border-radius: 10px;
             display: flex;
             justify-content: center;
             align-items: center;
-            font-size: 1.2rem;
+            font-size: 1.4rem;
         }
 
-        .icon-hadir { background: #d1fae5; color: #10b981; }
-        .icon-telat { background: #fee2e2; color: #ef4444; }
-        .icon-total { background: #dbeafe; color: #3b82f6; }
-        .icon-karyawan { background: #f3e8ff; color: #a855f7; }
+        /* Warna Icon Disesuaikan Tema Biru/Hijau/Merah Corporate */
+        .icon-hadir { background: #e8f5e9; color: var(--success); }
+        .icon-telat { background: #ffebee; color: var(--danger); }
+        .icon-total { background: var(--primary-light); color: var(--primary); }
+        .icon-karyawan { background: #fff3e0; color: var(--accent); }
 
-        .stat-info h3 { font-size: 0.85rem; color: var(--text-grey); margin-bottom: 5px; }
-        .stat-info p { font-size: 1.8rem; font-weight: 700; color: var(--text-dark); margin: 0; line-height: 1; }
-
-        /* --- SETTINGS PANEL (Updated) --- */
-        .settings-card {
-            background: var(--bg-card);
-            border-radius: 16px;
-            padding: 25px;
-            margin-bottom: 30px;
-            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.02);
-        }
-        
-        .card-header { margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; }
-        .card-header h3 { color: var(--text-dark); font-size: 1.1rem; }
-
-        .settings-table th { background: #f8fafc; color: var(--text-grey); font-weight: 600; padding: 12px; text-align: left; }
-        .settings-table td { padding: 10px; border-bottom: 1px solid #f1f5f9; }
-        .settings-table input[type="time"] {
-            border: 1px solid #e2e8f0;
-            padding: 6px 10px;
-            border-radius: 8px;
-            color: var(--text-dark);
-            width: 100%;
-            font-family: 'Poppins', sans-serif;
-        }
+        .stat-info h3 { font-size: 0.85rem; color: var(--text-grey); margin-bottom: 5px; text-transform: uppercase; letter-spacing: 0.5px; }
+        .stat-info p { font-size: 2rem; font-weight: 700; color: var(--text-dark); margin: 0; line-height: 1; }
 
         /* --- CHARTS --- */
         .charts-row {
@@ -196,49 +188,93 @@
 
         .chart-box {
             background: var(--bg-card);
-            padding: 20px;
-            border-radius: 16px;
-            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.02);
-            height: 350px;
+            padding: 25px;
+            border-radius: 12px;
+            border: 1px solid #e0e0e0;
+            height: 380px;
         }
+
+        /* --- SETTINGS PANEL --- */
+        .settings-card {
+            background: var(--bg-card);
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 30px;
+            border: 1px solid #e0e0e0;
+            border-top: 4px solid var(--primary); /* Aksen Atas Biru */
+        }
+        
+        .card-header { margin-bottom: 25px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #f0f0f0; padding-bottom: 15px; }
+        .card-header h3 { color: var(--primary); font-size: 1.2rem; display: flex; align-items: center; gap: 10px; }
+
+        .settings-table th { background: #f8fafc; color: var(--primary); font-weight: 700; padding: 15px; text-align: left; border-bottom: 2px solid #e2e8f0; }
+        .settings-table td { padding: 12px 15px; border-bottom: 1px solid #f1f5f9; }
+        .settings-table input[type="time"] {
+            border: 1px solid #cbd5e1;
+            padding: 8px 12px;
+            border-radius: 6px;
+            color: var(--text-dark);
+            width: 100%;
+            font-family: 'Roboto', sans-serif;
+            background: #f8fafc;
+        }
+        .settings-table input[type="time"]:focus { outline: 2px solid var(--primary); border-color: transparent; }
 
         /* --- TABLE & CONTROLS --- */
         .controls { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
         
         .btn {
-            padding: 10px 20px;
+            padding: 10px 24px;
             border: none;
-            border-radius: 8px;
-            font-weight: 500;
+            border-radius: 6px;
+            font-weight: 600;
             cursor: pointer;
             transition: 0.2s;
             display: flex;
             align-items: center;
             gap: 8px;
             font-size: 0.9rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
         }
 
         .btn-filter { background: white; color: var(--text-grey); border: 1px solid #e2e8f0; }
-        .btn-filter.active { background: var(--primary); color: white; border-color: var(--primary); box-shadow: 0 4px 10px rgba(67, 97, 238, 0.3); }
-        .btn-excel { background: #10b981; color: white; }
-        .btn-pdf { background: #ef4444; color: white; }
-        .btn-save { background: var(--text-dark); color: white; width: 100%; justify-content: center; margin-top: 15px; }
+        .btn-filter.active { 
+            background: var(--primary); 
+            color: white; 
+            border-color: var(--primary); 
+            box-shadow: 0 4px 6px rgba(13, 71, 161, 0.2); 
+        }
+        
+        /* Tombol Excel Hijau Excel, PDF Merah PDF */
+        .btn-excel { background: #217346; color: white; } 
+        .btn-pdf { background: #b30b00; color: white; }
+        
+        .btn-save { 
+            background: var(--primary); 
+            color: white; 
+            width: 100%; 
+            justify-content: center; 
+            margin-top: 20px; 
+            padding: 15px;
+            font-size: 1rem;
+        }
+        .btn-save:hover { background: var(--secondary); }
 
         .table-container {
             background: var(--bg-card);
-            border-radius: 16px;
+            border-radius: 12px;
             overflow: hidden;
-            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.02);
+            border: 1px solid #e0e0e0;
         }
 
         .data-table { width: 100%; border-collapse: collapse; }
-        .data-table th { background: #f8fafc; padding: 15px 20px; text-align: left; color: var(--text-grey); font-weight: 600; font-size: 0.9rem; }
-        .data-table td { padding: 15px 20px; border-bottom: 1px solid #f1f5f9; color: var(--text-dark); font-size: 0.95rem; }
-        .data-table tr:last-child td { border-bottom: none; }
+        .data-table th { background: #f1f5f9; padding: 18px 25px; text-align: left; color: var(--text-dark); font-weight: 700; font-size: 0.9rem; border-bottom: 2px solid #e2e8f0; }
+        .data-table td { padding: 18px 25px; border-bottom: 1px solid #f1f5f9; color: var(--text-dark); font-size: 0.95rem; }
+        .data-table tr:hover { background-color: #f8fafc; }
 
-        .status-badge { padding: 6px 14px; border-radius: 30px; font-size: 0.75rem; font-weight: 600; }
-        .st-Tepat-Waktu { background: #dcfce7; color: #166534; }
-        .st-Terlambat { background: #fee2e2; color: #991b1b; }
+        .status-badge { padding: 6px 16px; border-radius: 4px; font-size: 0.75rem; font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase; }
+        .st-Tepat-Waktu { background: #e8f5e9; color: #1b8e48; border: 1px solid #c8e6c9; }
+        .st-Terlambat { background: #ffebee; color: #d32f2f; border: 1px solid #ffcdd2; }
         .st-Unknown { background: #f1f5f9; color: #64748b; }
 
         @media(max-width: 1024px) {
@@ -268,15 +304,15 @@
         
         <nav>
             <div class="menu-item active">
-                <i class="fa-solid fa-layer-group"></i>
+                <i class="fa-solid fa-gauge-high"></i>
                 <span>Dashboard</span>
             </div>
             <div class="menu-item" onclick="document.querySelector('.settings-card').scrollIntoView({behavior: 'smooth'})">
-                <i class="fa-solid fa-calendar-days"></i>
+                <i class="fa-regular fa-calendar-check"></i>
                 <span>Jadwal Kerja</span>
             </div>
             <div class="menu-item" onclick="document.querySelector('.table-container').scrollIntoView({behavior: 'smooth'})">
-                <i class="fa-solid fa-users"></i>
+                <i class="fa-solid fa-users-viewfinder"></i>
                 <span>Data Presensi</span>
             </div>
         </nav>
@@ -287,15 +323,15 @@
         <header class="top-header">
             <div class="welcome-text">
                 <h1>Dashboard Admin</h1>
-                <p id="info-batas">Memuat konfigurasi...</p>
+                <p id="info-batas">Memuat konfigurasi sistem...</p>
             </div>
             <div class="header-actions">
                 <div class="clock-badge">
                     <i class="fa-regular fa-clock"></i>
                     <span id="clock">--:--:--</span>
                 </div>
-                <div class="clock-badge" style="background: var(--text-dark); color: white;">
-                    <i class="fa-solid fa-user-shield"></i>
+                <div class="clock-badge" style="background: var(--primary); color: white; border: none;">
+                    <i class="fa-solid fa-shield-halved"></i>
                     <span>Admin</span>
                 </div>
             </div>
@@ -303,30 +339,30 @@
 
         <div class="stats-grid">
             <div class="stat-card">
-                <div class="stat-icon icon-hadir"><i class="fa-solid fa-check"></i></div>
+                <div class="stat-icon icon-hadir"><i class="fa-solid fa-check-circle"></i></div>
                 <div class="stat-info">
                     <h3>Hadir (Tepat)</h3>
                     <p id="statHadir">0</p>
                 </div>
             </div>
             <div class="stat-card">
-                <div class="stat-icon icon-telat"><i class="fa-solid fa-triangle-exclamation"></i></div>
+                <div class="stat-icon icon-telat"><i class="fa-solid fa-circle-exclamation"></i></div>
                 <div class="stat-info">
                     <h3>Terlambat</h3>
                     <p id="statTelat">0</p>
                 </div>
             </div>
             <div class="stat-card">
-                <div class="stat-icon icon-total"><i class="fa-solid fa-clipboard-list"></i></div>
+                <div class="stat-icon icon-total"><i class="fa-solid fa-clipboard-user"></i></div>
                 <div class="stat-info">
-                    <h3>Presensi Masuk</h3>
+                    <h3>Total Masuk</h3>
                     <p id="statTotal">0</p>
                 </div>
             </div>
             <div class="stat-card">
-                <div class="stat-icon icon-karyawan"><i class="fa-solid fa-user-group"></i></div>
+                <div class="stat-icon icon-karyawan"><i class="fa-solid fa-users"></i></div>
                 <div class="stat-info">
-                    <h3>Total Karyawan</h3>
+                    <h3>Karyawan</h3>
                     <p id="statTotalKaryawan">0</p>
                 </div>
             </div>
@@ -369,7 +405,7 @@
 
         <div class="settings-card">
             <div class="card-header">
-                <h3><i class="fa-solid fa-gear"></i> Konfigurasi Jadwal Kerja</h3>
+                <h3><i class="fa-solid fa-sliders"></i> Konfigurasi Jadwal Kerja</h3>
             </div>
             <div class="settings-table-wrapper">
                 <table class="settings-table">
@@ -436,7 +472,7 @@
     async function saveAllSettings() {
         const rows = document.querySelectorAll('#settingsBody tr');
         const btn = document.querySelector('.btn-save');
-        btn.innerText = "Menyimpan..."; btn.disabled = true;
+        btn.innerText = "Menyimpan Perubahan..."; btn.disabled = true;
 
         for (const row of rows) {
             const id = row.getAttribute('data-id');
@@ -451,7 +487,7 @@
             }).eq('id', id);
         }
         btn.disabled = false; btn.innerText = "SIMPAN PERUBAHAN JADWAL";
-        alert('✅ Pengaturan Berhasil Disimpan!');
+        alert('✅ Pengaturan Jadwal Berhasil Disimpan!');
         location.reload(); 
     }
 
@@ -463,7 +499,7 @@
             document.querySelectorAll('.btn-filter').forEach(b => b.classList.remove('active')); 
             btn.classList.add('active'); 
         }
-        document.getElementById('dataBody').innerHTML = '<tr><td colspan="5" style="text-align:center; padding: 20px;">Memuat data...</td></tr>';
+        document.getElementById('dataBody').innerHTML = '<tr><td colspan="5" style="text-align:center; padding: 20px; color: var(--text-grey);">Sedang memuat data presensi...</td></tr>';
 
         // A. AMBIL BATAS TELAT HARI INI
         const hariIniID = new Date().getDay() || 7; 
@@ -475,7 +511,6 @@
         // B. QUERY PRESENSI (FIX TIMEZONE)
         let query = client.from('presensi').select('*, karyawan(nama)');
         
-        // Buat string tanggal lokal (YYYY-MM-DD) berdasarkan waktu laptop user
         const today = new Date();
         const year = today.getFullYear();
         const month = String(today.getMonth() + 1).padStart(2, '0');
@@ -538,7 +573,7 @@
         const dateCounts = {};
 
         if(currentData.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding: 20px;">Tidak ada data.</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding: 30px; color: var(--text-grey);">Belum ada data presensi untuk periode ini.</td></tr>';
         }
 
         currentData.forEach(d => {
@@ -574,26 +609,39 @@
         if(lineChartInstance) lineChartInstance.destroy();
         if(doughnutChartInstance) doughnutChartInstance.destroy();
 
-        // Line Chart
+        // Line Chart (Biru Corporate)
         const ctxLine = document.getElementById('lineChart').getContext('2d');
         lineChartInstance = new Chart(ctxLine, {
             type: 'line',
             data: {
                 labels: Object.keys(dateCounts).sort(),
-                datasets: [{ label: 'Kehadiran', data: Object.values(dateCounts), borderColor: '#4361ee', backgroundColor: 'rgba(67, 97, 238, 0.1)', tension: 0.3, fill: true }]
+                datasets: [{ 
+                    label: 'Tren Kehadiran', 
+                    data: Object.values(dateCounts), 
+                    borderColor: '#0d47a1', 
+                    backgroundColor: 'rgba(13, 71, 161, 0.1)', 
+                    tension: 0.3, 
+                    fill: true,
+                    pointBackgroundColor: '#0d47a1'
+                }]
             },
             options: { maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, grid: { borderDash: [5, 5] } }, x: { grid: { display: false } } } }
         });
 
-        // Doughnut Chart
+        // Doughnut Chart (Hijau vs Merah)
         const ctxDonut = document.getElementById('doughnutChart').getContext('2d');
         doughnutChartInstance = new Chart(ctxDonut, {
             type: 'doughnut',
             data: {
                 labels: ['Tepat Waktu', 'Terlambat'],
-                datasets: [{ data: [tepat, telat], backgroundColor: ['#10b981', '#ef4444'], borderWidth: 0 }]
+                datasets: [{ 
+                    data: [tepat, telat], 
+                    backgroundColor: ['#1b8e48', '#d32f2f'], 
+                    borderWidth: 0,
+                    hoverOffset: 4
+                }]
             },
-            options: { maintainAspectRatio: false, cutout: '70%', plugins: { legend: { position: 'bottom' } } }
+            options: { maintainAspectRatio: false, cutout: '70%', plugins: { legend: { position: 'bottom', labels: { usePointStyle: true } } } }
         });
     }
 
@@ -606,21 +654,30 @@
             Tanggal: d.tanggal, Nama: d.karyawan?.nama, Masuk: d.jam_masuk, Pulang: d.jam_keluar, Status: d.computed_status
         }));
         const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(exportData), "Laporan");
-        XLSX.writeFile(wb, "Laporan_Presensi.xlsx");
+        XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(exportData), "Laporan Presensi");
+        XLSX.writeFile(wb, "Laporan_Presensi_PT_DAK.xlsx");
     }
 
     function exportPDF() {
         if(currentData.length === 0) return alert("Data Kosong");
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF();
-        doc.text("Laporan Presensi Karyawan", 14, 15);
+        
+        // Header PDF dengan Warna Corporate
+        doc.setFillColor(13, 71, 161); // #0d47a1
+        doc.rect(0, 0, 210, 20, 'F');
+        doc.setTextColor(255, 255, 255);
+        doc.setFontSize(14);
+        doc.text("Laporan Presensi Karyawan - PT DAK", 14, 13);
+        
         doc.autoTable({
             head: [['Tanggal', 'Nama', 'Masuk', 'Pulang', 'Status']],
             body: currentData.map(d => [d.tanggal, d.karyawan?.nama, d.jam_masuk||'-', d.jam_keluar||'-', d.computed_status]),
-            startY: 25
+            startY: 25,
+            headStyles: { fillColor: [13, 71, 161] }, // Header Tabel Biru Corporate
+            alternateRowStyles: { fillColor: [240, 248, 255] }
         });
-        doc.save("Laporan_Presensi.pdf");
+        doc.save("Laporan_Presensi_PT_DAK.pdf");
     }
 
     // INIT
