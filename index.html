@@ -18,18 +18,18 @@
         /* TEMA WARNA PT DAK (CORPORATE BLUE) */
         :root { 
             --primary: #0d47a1;      /* Biru Tua PT DAK */
-            --primary-light: #e3f2fd; /* Biru Sangat Muda untuk Background Icon */
-            --secondary: #002171;    /* Navy Gelap untuk Hover */
-            --accent: #f59e0b;       /* Orange untuk Aksen/Warning */
+            --primary-light: #e3f2fd; /* Biru Sangat Muda */
+            --secondary: #002171;    /* Navy Gelap */
+            --accent: #f59e0b;       /* Orange Aksen */
             
-            --bg-body: #f4f6f8;      /* Abu-abu terang bersih */
+            --bg-body: #f4f6f8;      
             --bg-card: #ffffff;
             
-            --text-dark: #1e293b;    /* Hitam kebiruan */
+            --text-dark: #1e293b;    
             --text-grey: #64748b;
             
-            --success: #1b8e48;      /* Hijau lebih gelap/serius */
-            --danger: #d32f2f;       /* Merah Bata */
+            --success: #1b8e48;      
+            --danger: #d32f2f;       
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Roboto', sans-serif; }
@@ -53,6 +53,7 @@
         .logo-container {
             display: flex;
             align-items: center;
+            justify-content: center; /* Logo di tengah */
             gap: 15px;
             margin-bottom: 40px;
             padding-bottom: 20px;
@@ -60,16 +61,15 @@
         }
 
         .logo-container img {
-            width: 50px;
-            height: 50px;
+            width: auto;       /* Lebar otomatis menyesuaikan rasio */
+            max-width: 200px;  /* Maksimal lebar agar tidak merusak sidebar */
+            height: 60px;      /* Tinggi tetap agar rapi */
             object-fit: contain;
         }
 
+        /* H2 disembunyikan karena logo PT DAK biasanya sudah ada tulisannya */
         .logo-container h2 {
-            font-size: 1.3rem;
-            color: var(--primary); /* Menggunakan warna corporate */
-            font-weight: 800;
-            letter-spacing: -0.5px;
+            display: none; 
         }
 
         .menu-item {
@@ -87,7 +87,6 @@
             border-left: 4px solid transparent;
         }
 
-        /* Menu Active Style: Blok Biru Corporate */
         .menu-item:hover, .menu-item.active {
             background-color: var(--primary-light);
             color: var(--primary);
@@ -146,7 +145,7 @@
             background: var(--bg-card);
             padding: 25px;
             border-radius: 12px;
-            border: 1px solid #e0e0e0; /* Border tipis profesional */
+            border: 1px solid #e0e0e0;
             display: flex;
             align-items: center;
             gap: 20px;
@@ -169,7 +168,6 @@
             font-size: 1.4rem;
         }
 
-        /* Warna Icon Disesuaikan Tema Biru/Hijau/Merah Corporate */
         .icon-hadir { background: #e8f5e9; color: var(--success); }
         .icon-telat { background: #ffebee; color: var(--danger); }
         .icon-total { background: var(--primary-light); color: var(--primary); }
@@ -201,7 +199,7 @@
             padding: 30px;
             margin-bottom: 30px;
             border: 1px solid #e0e0e0;
-            border-top: 4px solid var(--primary); /* Aksen Atas Biru */
+            border-top: 4px solid var(--primary);
         }
         
         .card-header { margin-bottom: 25px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #f0f0f0; padding-bottom: 15px; }
@@ -245,7 +243,6 @@
             box-shadow: 0 4px 6px rgba(13, 71, 161, 0.2); 
         }
         
-        /* Tombol Excel Hijau Excel, PDF Merah PDF */
         .btn-excel { background: #217346; color: white; } 
         .btn-pdf { background: #b30b00; color: white; }
         
@@ -298,7 +295,7 @@
 
     <aside class="sidebar">
         <div class="logo-container">
-            <img src="https://pt-dak.co.id/assets/images/logo/ptdak1.png" width="70px" height="70px" alt="Logo PT DAK">
+            <img src="https://pt-dak.co.id/assets/images/logo/ptdak1.png" alt="Logo PT DAK">
         </div>
         
         <nav>
