@@ -53,7 +53,7 @@
         .logo-container {
             display: flex;
             align-items: center;
-            justify-content: center; /* Logo di tengah */
+            justify-content: center; 
             gap: 15px;
             margin-bottom: 40px;
             padding-bottom: 20px;
@@ -61,13 +61,12 @@
         }
 
         .logo-container img {
-            width: auto;       /* Lebar otomatis menyesuaikan rasio */
-            max-width: 200px;  /* Maksimal lebar agar tidak merusak sidebar */
-            height: 60px;      /* Tinggi tetap agar rapi */
+            width: auto;
+            max-width: 200px;
+            height: 60px;
             object-fit: contain;
         }
 
-        /* H2 disembunyikan karena logo PT DAK biasanya sudah ada tulisannya */
         .logo-container h2 {
             display: none; 
         }
@@ -299,7 +298,7 @@
         </div>
         
         <nav>
-            <div class="menu-item active">
+            <div class="menu-item active" onclick="goHome()">
                 <i class="fa-solid fa-gauge-high"></i>
                 <span>Dashboard</span>
             </div>
@@ -316,7 +315,7 @@
 
     <main class="main-content">
         
-        <header class="top-header">
+        <header class="top-header" id="dashboard-top">
             <div class="welcome-text">
                 <h1>Dashboard Admin</h1>
                 <p id="info-batas">Memuat konfigurasi sistem...</p>
@@ -374,13 +373,30 @@
         </div>
 
         <div class="controls">
-            <button onclick="fetchData('hari', this)" class="btn btn-filter active">Hari Ini</button>
+            <button id="btn-hari-ini" onclick="fetchData('hari', this)" class="btn btn-filter active">Hari Ini</button>
             <button onclick="fetchData('minggu', this)" class="btn btn-filter">Minggu Ini</button>
             <button onclick="fetchData('bulan', this)" class="btn btn-filter">Bulan Ini</button>
             <div style="flex-grow: 1;"></div>
             <button onclick="exportExcel()" class="btn btn-excel"><i class="fa-solid fa-file-excel"></i> Excel</button>
             <button onclick="exportPDF()" class="btn btn-pdf"><i class="fa-solid fa-file-pdf"></i> PDF</button>
         </div>
+
+        <div class="table-container">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Tanggal</th>
+                        <th>Nama Karyawan</th>
+                        <th>Jam Masuk</th>
+                        <th>Jam Pulang</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody id="dataBody"></tbody>
+            </table>
+        </div>
+
+        <br><br>
 
         <div class="settings-card">
             <div class="card-header">
@@ -407,23 +423,6 @@
             <button onclick="saveAllSettings()" class="btn btn-save">SIMPAN PERUBAHAN JADWAL</button>
         </div>
 
-        <br><br>
-
-        <div class="table-container">
-            <table class="data-table">
-                <thead>
-                    <tr>
-                        <th>Tanggal</th>
-                        <th>Nama Karyawan</th>
-                        <th>Jam Masuk</th>
-                        <th>Jam Pulang</th>
-                        <th>Status</th>
-                    </tr>
-                </thead>
-                <tbody id="dataBody"></tbody>
-            </table>
-        </div>
-
     </main>
 
 <script>
@@ -439,6 +438,14 @@
 
     // Jam Realtime
     setInterval(() => document.getElementById('clock').innerText = new Date().toLocaleTimeString('id-ID'), 1000);
+
+    // --- FUNGSI BARU UNTUK KEMBALI KE DASHBOARD ---
+    function goHome() {
+        // 1. Scroll ke atas
+        window.scrollTo({top: 0, behavior: 'smooth'});
+        // 2. Refresh data hari ini
+        fetchData('hari', document.getElementById('btn-hari-ini'));
+    }
 
     // ============================================
     // 2. PENGATURAN JADWAL (Settings Logic)
@@ -497,14 +504,12 @@
         }
         document.getElementById('dataBody').innerHTML = '<tr><td colspan="5" style="text-align:center; padding: 20px; color: var(--text-grey);">Sedang memuat data presensi...</td></tr>';
 
-        // A. AMBIL BATAS TELAT HARI INI
         const hariIniID = new Date().getDay() || 7; 
         const { data: setting } = await client.from('pengaturan_absen').select('batas_terlambat').eq('hari_id', hariIniID).single();
         if(setting && setting.batas_terlambat) BATAS_TELAT_GLOBAL = setting.batas_terlambat;
         
         document.getElementById('info-batas').innerText = `Batas Terlambat Hari Ini: ${BATAS_TELAT_GLOBAL}`;
 
-        // B. QUERY PRESENSI (FIX TIMEZONE)
         let query = client.from('presensi').select('*, karyawan(nama)');
         
         const today = new Date();
@@ -528,10 +533,8 @@
         const { data, error } = await query.order('jam_masuk', {ascending: false});
         if(error) return console.error(error);
 
-        // C. HITUNG STATUS
         currentData = (data || []).map(d => {
             let status = 'Tepat Waktu';
-            
             if(d.jam_masuk) {
                 if(d.jam_masuk > BATAS_TELAT_GLOBAL) {
                     status = 'Terlambat';
@@ -545,26 +548,18 @@
         renderAll();
     }
 
-    // ============================================
-    // 4. FETCH TOTAL KARYAWAN
-    // ============================================
     async function loadTotalKaryawan() {
         const { count, error } = await client
             .from('karyawan')
             .select('*', { count: 'exact', head: true });
-        
         if(!error) {
             document.getElementById('statTotalKaryawan').innerText = count || 0;
         }
     }
 
-    // ============================================
-    // 5. RENDER UI
-    // ============================================
     function renderAll() {
         const tbody = document.getElementById('dataBody');
         tbody.innerHTML = '';
-
         let countTepat = 0, countTelat = 0;
         const dateCounts = {};
 
@@ -573,12 +568,10 @@
         }
 
         currentData.forEach(d => {
-            // Stats
             if(d.computed_status === 'Terlambat') countTelat++;
             else if(d.computed_status === 'Tepat Waktu') countTepat++;
             dateCounts[d.tanggal] = (dateCounts[d.tanggal] || 0) + 1;
 
-            // Badge Color
             let badge = 'st-Unknown';
             if(d.computed_status === 'Tepat Waktu') badge = 'st-Tepat-Waktu';
             if(d.computed_status === 'Terlambat') badge = 'st-Terlambat';
@@ -593,11 +586,9 @@
                 </tr>`;
         });
 
-        // Update Stats Card
         document.getElementById('statHadir').innerText = countTepat;
         document.getElementById('statTelat').innerText = countTelat;
         document.getElementById('statTotal').innerText = currentData.length;
-
         renderCharts(dateCounts, countTepat, countTelat);
     }
 
@@ -605,7 +596,6 @@
         if(lineChartInstance) lineChartInstance.destroy();
         if(doughnutChartInstance) doughnutChartInstance.destroy();
 
-        // Line Chart (Biru Corporate)
         const ctxLine = document.getElementById('lineChart').getContext('2d');
         lineChartInstance = new Chart(ctxLine, {
             type: 'line',
@@ -624,7 +614,6 @@
             options: { maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, grid: { borderDash: [5, 5] } }, x: { grid: { display: false } } } }
         });
 
-        // Doughnut Chart (Hijau vs Merah)
         const ctxDonut = document.getElementById('doughnutChart').getContext('2d');
         doughnutChartInstance = new Chart(ctxDonut, {
             type: 'doughnut',
@@ -641,9 +630,6 @@
         });
     }
 
-    // ============================================
-    // 6. EXPORT
-    // ============================================
     function exportExcel() {
         if(currentData.length === 0) return alert("Data Kosong");
         const exportData = currentData.map(d => ({
@@ -658,28 +644,24 @@
         if(currentData.length === 0) return alert("Data Kosong");
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF();
-        
-        // Header PDF dengan Warna Corporate
-        doc.setFillColor(13, 71, 161); // #0d47a1
+        doc.setFillColor(13, 71, 161);
         doc.rect(0, 0, 210, 20, 'F');
         doc.setTextColor(255, 255, 255);
         doc.setFontSize(14);
         doc.text("Laporan Presensi Karyawan - PT DAK", 14, 13);
-        
         doc.autoTable({
             head: [['Tanggal', 'Nama', 'Masuk', 'Pulang', 'Status']],
             body: currentData.map(d => [d.tanggal, d.karyawan?.nama, d.jam_masuk||'-', d.jam_keluar||'-', d.computed_status]),
             startY: 25,
-            headStyles: { fillColor: [13, 71, 161] }, // Header Tabel Biru Corporate
+            headStyles: { fillColor: [13, 71, 161] },
             alternateRowStyles: { fillColor: [240, 248, 255] }
         });
         doc.save("Laporan_Presensi_PT_DAK.pdf");
     }
 
-    // INIT
     loadSettings();
     loadTotalKaryawan(); 
-    fetchData('hari', document.querySelector('.btn-filter'));
+    fetchData('hari', document.getElementById('btn-hari-ini'));
 
 </script>
 
