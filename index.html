@@ -381,23 +381,6 @@
             <button onclick="exportPDF()" class="btn btn-pdf"><i class="fa-solid fa-file-pdf"></i> PDF</button>
         </div>
 
-        <div class="table-container">
-            <table class="data-table">
-                <thead>
-                    <tr>
-                        <th>Tanggal</th>
-                        <th>Nama Karyawan</th>
-                        <th>Jam Masuk</th>
-                        <th>Jam Pulang</th>
-                        <th>Status</th>
-                    </tr>
-                </thead>
-                <tbody id="dataBody"></tbody>
-            </table>
-        </div>
-
-        <br><br>
-
         <div class="settings-card">
             <div class="card-header">
                 <h3><i class="fa-solid fa-sliders"></i> Konfigurasi Jadwal Kerja</h3>
@@ -422,6 +405,27 @@
             </div>
             <button onclick="saveAllSettings()" class="btn btn-save">SIMPAN PERUBAHAN JADWAL</button>
         </div>
+
+         <br><br>
+
+        <div class="table-container">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Tanggal</th>
+                        <th>Nama Karyawan</th>
+                        <th>Jam Masuk</th>
+                        <th>Jam Pulang</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody id="dataBody"></tbody>
+            </table>
+        </div>
+
+       
+
+        
 
     </main>
 
