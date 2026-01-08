@@ -372,15 +372,6 @@
             </div>
         </div>
 
-        <div class="controls">
-            <button id="btn-hari-ini" onclick="fetchData('hari', this)" class="btn btn-filter active">Hari Ini</button>
-            <button onclick="fetchData('minggu', this)" class="btn btn-filter">Minggu Ini</button>
-            <button onclick="fetchData('bulan', this)" class="btn btn-filter">Bulan Ini</button>
-            <div style="flex-grow: 1;"></div>
-            <button onclick="exportExcel()" class="btn btn-excel"><i class="fa-solid fa-file-excel"></i> Excel</button>
-            <button onclick="exportPDF()" class="btn btn-pdf"><i class="fa-solid fa-file-pdf"></i> PDF</button>
-        </div>
-
         <div class="settings-card">
             <div class="card-header">
                 <h3><i class="fa-solid fa-sliders"></i> Konfigurasi Jadwal Kerja</h3>
@@ -407,6 +398,17 @@
         </div>
 
          <br><br>
+
+        <div class="controls">
+            <button id="btn-hari-ini" onclick="fetchData('hari', this)" class="btn btn-filter active">Hari Ini</button>
+            <button onclick="fetchData('minggu', this)" class="btn btn-filter">Minggu Ini</button>
+            <button onclick="fetchData('bulan', this)" class="btn btn-filter">Bulan Ini</button>
+            <div style="flex-grow: 1;"></div>
+            <button onclick="exportExcel()" class="btn btn-excel"><i class="fa-solid fa-file-excel"></i> Excel</button>
+            <button onclick="exportPDF()" class="btn btn-pdf"><i class="fa-solid fa-file-pdf"></i> PDF</button>
+        </div>
+
+        
 
         <div class="table-container">
             <table class="data-table">
