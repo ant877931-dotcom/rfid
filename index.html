@@ -47,16 +47,17 @@
         .logo-container {
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 15px;
             margin-bottom: 40px;
             padding-bottom: 20px;
             border-bottom: 1px solid #f1f5f9;
         }
 
         .logo-container img {
-            width: auto;
-            height: 40px;
+            width: 50px; /* Ukuran logo disesuaikan */
+            height: 50px;
             object-fit: contain;
+            border-radius: 8px; /* Sedikit lengkungan agar rapi */
         }
 
         .logo-container h2 {
@@ -85,11 +86,7 @@
             box-shadow: 0 4px 10px rgba(67, 97, 238, 0.3);
         }
 
-        .menu-item img {
-            width: 20px;
-            height: 20px;
-            object-fit: contain;
-        }
+        .menu-item i { width: 20px; text-align: center; }
 
         /* --- MAIN CONTENT --- */
         .main-content {
@@ -265,13 +262,13 @@
 
     <aside class="sidebar">
         <div class="logo-container">
-            <img src="image_9.png" alt="Logo PT DAK">
+            <img src="https://www.startpage.com/av/proxy-image?piurl=https%3A%2F%2Ftse2.mm.bing.net%2Fth%2Fid%2FOIP.nbOMd7tmRoBMG-SjjCEQGAHaHX%3Fpid%3DApi&sp=1767839905Tc6ec5122dec900edd6b5f2f262081bc09174324c32aee94043befb023f7857aa" alt="Logo PT DAK">
             <h2>PT DAK</h2>
         </div>
         
         <nav>
             <div class="menu-item active">
-                <img src="https://www.startpage.com/av/proxy-image?piurl=https%3A%2F%2Ftse2.mm.bing.net%2Fth%2Fid%2FOIP.nbOMd7tmRoBMG-SjjCEQGAHaHX%3Fpid%3DApi&sp=1767839905Tc6ec5122dec900edd6b5f2f262081bc09174324c32aee94043befb023f7857aa" alt="Logo">
+                <i class="fa-solid fa-layer-group"></i>
                 <span>Dashboard</span>
             </div>
             <div class="menu-item" onclick="document.querySelector('.settings-card').scrollIntoView({behavior: 'smooth'})">
