@@ -85,6 +85,12 @@
             box-shadow: 0 4px 10px rgba(67, 97, 238, 0.3);
         }
 
+        .menu-item img {
+            width: 20px;
+            height: 20px;
+            object-fit: contain;
+        }
+
         /* --- MAIN CONTENT --- */
         .main-content {
             flex: 1;
@@ -265,7 +271,7 @@
         
         <nav>
             <div class="menu-item active">
-                <i class="fa-solid fa-layer-group"></i>
+                <img src="image_9.png" alt="Logo">
                 <span>Dashboard</span>
             </div>
             <div class="menu-item" onclick="document.querySelector('.settings-card').scrollIntoView({behavior: 'smooth'})">
