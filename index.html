@@ -71,12 +71,21 @@
         .settings-table, .data-table { width: 100%; border-collapse: collapse; }
         .settings-table th, .data-table th { background: #f1f5f9; padding: 15px; text-align: left; font-weight: 700; }
         .settings-table td, .data-table td { padding: 12px 15px; border-bottom: 1px solid #f1f5f9; }
-        input[type="time"] { border: 1px solid #cbd5e1; padding: 8px; border-radius: 6px; width: 100%; }
+        
+        /* Input Styling */
+        input[type="time"], input[type="date"] { 
+            border: 1px solid #cbd5e1; 
+            padding: 8px; 
+            border-radius: 6px; 
+            font-size: 0.9rem;
+            outline: none;
+        }
+        input[type="date"]:focus { border-color: var(--primary); }
 
-        .controls { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
-        .btn { padding: 10px 24px; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 8px; }
-        .btn-filter { background: white; border: 1px solid #e2e8f0; }
-        .btn-filter.active { background: var(--primary); color: white; }
+        .controls { display: flex; gap: 12px; margin-bottom: 20px; flex-wrap: wrap; align-items: center; }
+        .btn { padding: 10px 24px; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 8px; font-size: 0.9rem; transition: 0.2s; }
+        .btn-filter { background: white; border: 1px solid #e2e8f0; color: var(--text-grey); }
+        .btn-filter.active { background: var(--primary); color: white; border-color: var(--primary); }
         .btn-excel { background: #217346; color: white; }
         .btn-pdf { background: #b30b00; color: white; }
         .btn-save { background: var(--primary); color: white; width: 100%; justify-content: center; margin-top: 20px; padding: 15px; }
@@ -84,6 +93,9 @@
         .status-badge { padding: 6px 16px; border-radius: 4px; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; }
         .st-Tepat-Waktu { background: #e8f5e9; color: #1b8e48; }
         .st-Terlambat { background: #ffebee; color: #d32f2f; }
+
+        .cal-picker-group { display: flex; align-items: center; gap: 8px; background: white; padding: 5px 12px; border: 1px solid #e2e8f0; border-radius: 6px; }
+        .cal-picker-group label { font-size: 0.8rem; font-weight: 700; color: var(--text-grey); }
 
         @media(max-width: 1024px) { .sidebar { width: 80px; } .main-content { margin-left: 80px; } .menu-item span, .logo-container h2 { display: none; } }
     </style>
@@ -148,16 +160,12 @@
 
         <div id="jadwal-section" class="settings-card">
             <div class="card-header"><h3><i class="fa-solid fa-sliders"></i> Konfigurasi Jadwal Kerja</h3></div>
-            <div class="settings-table-wrapper">
-                <table class="settings-table">
-                    <thead>
-                        <tr>
-                            <th>Hari</th><th>Mulai Masuk</th><th>Batas Telat</th><th>Akhir Masuk</th><th>Mulai Pulang</th><th>Akhir Pulang</th><th style="text-align: center;">Libur</th>
-                        </tr>
-                    </thead>
-                    <tbody id="settingsBody"><tr><td colspan="7">Memuat data...</td></tr></tbody>
-                </table>
-            </div>
+            <table class="settings-table">
+                <thead>
+                    <tr><th>Hari</th><th>Mulai Masuk</th><th>Batas Telat</th><th>Akhir Masuk</th><th>Mulai Pulang</th><th>Akhir Pulang</th><th style="text-align: center;">Libur</th></tr>
+                </thead>
+                <tbody id="settingsBody"><tr><td colspan="7">Memuat data...</td></tr></tbody>
+            </table>
             <button onclick="saveAllSettings()" class="btn btn-save">SIMPAN PERUBAHAN JADWAL</button>
         </div>
 
@@ -166,6 +174,12 @@
                 <button id="btn-hari-ini" onclick="fetchData('hari', this)" class="btn btn-filter active">Hari Ini</button>
                 <button onclick="fetchData('minggu', this)" class="btn btn-filter">Minggu Ini</button>
                 <button onclick="fetchData('bulan', this)" class="btn btn-filter">Bulan Ini</button>
+                
+                <div class="cal-picker-group">
+                    <label><i class="fa-solid fa-calendar-day"></i> Pilih Tanggal:</label>
+                    <input type="date" id="datePicker" onchange="fetchData('custom', null)">
+                </div>
+
                 <div style="flex-grow: 1;"></div>
                 <button onclick="exportExcel()" class="btn btn-excel"><i class="fa-solid fa-file-excel"></i> Excel</button>
                 <button onclick="exportPDF()" class="btn btn-pdf"><i class="fa-solid fa-file-pdf"></i> PDF</button>
@@ -235,21 +249,28 @@
     }
 
     async function fetchData(range, btn) {
-        if(btn) {
-            document.querySelectorAll('.btn-filter').forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-        }
+        // Atur status aktif tombol
+        document.querySelectorAll('.btn-filter').forEach(b => b.classList.remove('active'));
+        if(btn) btn.classList.add('active');
+
         const today = new Date();
-        const localDateStr = today.toISOString().split('T')[0];
         let query = client.from('presensi').select('*, karyawan(nama)');
         
-        if(range === 'hari') query = query.eq('tanggal', localDateStr);
-        else if(range === 'minggu') {
+        if(range === 'hari') {
+            query = query.eq('tanggal', today.toISOString().split('T')[0]);
+            document.getElementById('datePicker').value = ""; // Reset kalender jika pilih filter cepat
+        } else if(range === 'minggu') {
             let d = new Date(); d.setDate(d.getDate()-7);
             query = query.gte('tanggal', d.toISOString().split('T')[0]);
+            document.getElementById('datePicker').value = "";
         } else if(range === 'bulan') {
             let f = new Date(today.getFullYear(), today.getMonth(), 1);
             query = query.gte('tanggal', f.toISOString().split('T')[0]);
+            document.getElementById('datePicker').value = "";
+        } else if(range === 'custom') {
+            const selectedDate = document.getElementById('datePicker').value;
+            if(!selectedDate) return;
+            query = query.eq('tanggal', selectedDate);
         }
 
         const { data, error } = await query.order('jam_masuk', {ascending: false});
@@ -267,6 +288,10 @@
         tbody.innerHTML = '';
         let countTepat = 0, countTelat = 0;
         const dateCounts = {};
+
+        if(currentData.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding: 30px; color: var(--text-grey);">Tidak ada data ditemukan.</td></tr>';
+        }
 
         currentData.forEach(d => {
             if(d.computed_status === 'Terlambat') countTelat++; else countTepat++;
@@ -288,15 +313,15 @@
         const ctxL = document.getElementById('lineChart');
         lineChartInstance = new Chart(ctxL, {
             type: 'line',
-            data: { labels: Object.keys(dateCounts).sort(), datasets: [{ label: 'Kehadiran', data: Object.values(dateCounts), borderColor: '#0d47a1', fill: true }] },
-            options: { maintainAspectRatio: false }
+            data: { labels: Object.keys(dateCounts).sort(), datasets: [{ label: 'Kehadiran', data: Object.values(dateCounts), borderColor: '#0d47a1', backgroundColor: 'rgba(13, 71, 161, 0.1)', fill: true, tension: 0.3 }] },
+            options: { maintainAspectRatio: false, plugins: { legend: { display: false } } }
         });
 
         const ctxD = document.getElementById('doughnutChart');
         doughnutChartInstance = new Chart(ctxD, {
             type: 'doughnut',
-            data: { labels: ['Tepat', 'Telat'], datasets: [{ data: [tepat, telat], backgroundColor: ['#1b8e48', '#d32f2f'] }] },
-            options: { maintainAspectRatio: false }
+            data: { labels: ['Tepat', 'Telat'], datasets: [{ data: [tepat, telat], backgroundColor: ['#1b8e48', '#d32f2f'], borderWidth: 0 }] },
+            options: { maintainAspectRatio: false, cutout: '70%', plugins: { legend: { position: 'bottom' } } }
         });
     }
 
