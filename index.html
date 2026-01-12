@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="id">
 <head>
@@ -33,6 +34,7 @@
             padding-bottom: 20px; border-bottom: 1px solid #f1f5f9;
         }
         .logo-container img { width: auto; max-width: 200px; height: 60px; object-fit: contain; }
+        
         .menu-item {
             display: flex; align-items: center; gap: 15px; padding: 14px 20px; color: var(--text-grey);
             text-decoration: none; border-radius: 8px; margin-bottom: 8px; transition: all 0.3s ease;
@@ -47,20 +49,22 @@
         .welcome-text h1 { font-size: 1.6rem; color: var(--text-dark); margin-bottom: 5px; font-weight: 700; }
         .clock-badge {
             background: white; padding: 10px 20px; border-radius: 6px; font-weight: 600; color: var(--primary);
-            border: 1px solid #e0e0e0; display: flex; align-items: center; gap: 10px; font-family: monospace;
+            border: 1px solid #e0e0e0; display: flex; align-items: center; gap: 10px; font-family: monospace; font-size: 1rem;
         }
 
         /* --- STATS & CHARTS --- */
         .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px; margin-bottom: 30px; }
         .stat-card {
             background: var(--bg-card); padding: 25px; border-radius: 12px; border: 1px solid #e0e0e0;
-            display: flex; align-items: center; gap: 20px;
+            display: flex; align-items: center; gap: 20px; transition: 0.3s;
         }
+        .stat-card:hover { transform: translateY(-5px); box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
         .stat-icon { width: 56px; height: 56px; border-radius: 10px; display: flex; justify-content: center; align-items: center; font-size: 1.4rem; }
         .icon-hadir { background: #e8f5e9; color: var(--success); }
         .icon-telat { background: #ffebee; color: var(--danger); }
         .icon-total { background: var(--primary-light); color: var(--primary); }
         .icon-karyawan { background: #fff3e0; color: var(--accent); }
+        
         .charts-row { display: grid; grid-template-columns: 2fr 1fr; gap: 20px; margin-bottom: 30px; }
         .chart-box { background: var(--bg-card); padding: 25px; border-radius: 12px; border: 1px solid #e0e0e0; height: 380px; }
 
@@ -68,19 +72,14 @@
         .settings-card, .table-container { background: var(--bg-card); border-radius: 12px; padding: 30px; margin-bottom: 30px; border: 1px solid #e0e0e0; }
         .settings-card { border-top: 4px solid var(--primary); }
         .card-header { margin-bottom: 20px; border-bottom: 1px solid #f0f0f0; padding-bottom: 15px; }
+        .card-header h3 { color: var(--primary); display: flex; align-items: center; gap: 10px; }
+
         .settings-table, .data-table { width: 100%; border-collapse: collapse; }
-        .settings-table th, .data-table th { background: #f1f5f9; padding: 15px; text-align: left; font-weight: 700; }
+        .settings-table th, .data-table th { background: #f1f5f9; padding: 15px; text-align: left; font-weight: 700; color: var(--primary); }
         .settings-table td, .data-table td { padding: 12px 15px; border-bottom: 1px solid #f1f5f9; }
         
-        /* Input Styling */
-        input[type="time"], input[type="date"] { 
-            border: 1px solid #cbd5e1; 
-            padding: 8px; 
-            border-radius: 6px; 
-            font-size: 0.9rem;
-            outline: none;
-        }
-        input[type="date"]:focus { border-color: var(--primary); }
+        input[type="time"], input[type="date"] { border: 1px solid #cbd5e1; padding: 8px; border-radius: 6px; font-size: 0.9rem; outline: none; }
+        input[type="date"]:focus, input[type="time"]:focus { border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-light); }
 
         .controls { display: flex; gap: 12px; margin-bottom: 20px; flex-wrap: wrap; align-items: center; }
         .btn { padding: 10px 24px; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 8px; font-size: 0.9rem; transition: 0.2s; }
@@ -90,14 +89,14 @@
         .btn-pdf { background: #b30b00; color: white; }
         .btn-save { background: var(--primary); color: white; width: 100%; justify-content: center; margin-top: 20px; padding: 15px; }
 
+        .cal-picker-group { display: flex; align-items: center; gap: 8px; background: white; padding: 5px 12px; border: 1px solid #e2e8f0; border-radius: 6px; }
+        .cal-picker-group label { font-size: 0.8rem; font-weight: 700; color: var(--text-grey); }
+
         .status-badge { padding: 6px 16px; border-radius: 4px; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; }
         .st-Tepat-Waktu { background: #e8f5e9; color: #1b8e48; }
         .st-Terlambat { background: #ffebee; color: #d32f2f; }
 
-        .cal-picker-group { display: flex; align-items: center; gap: 8px; background: white; padding: 5px 12px; border: 1px solid #e2e8f0; border-radius: 6px; }
-        .cal-picker-group label { font-size: 0.8rem; font-weight: 700; color: var(--text-grey); }
-
-        @media(max-width: 1024px) { .sidebar { width: 80px; } .main-content { margin-left: 80px; } .menu-item span, .logo-container h2 { display: none; } }
+        @media(max-width: 1024px) { .sidebar { width: 80px; } .main-content { margin-left: 80px; } .menu-item span { display: none; } .charts-row { grid-template-columns: 1fr; } }
     </style>
 </head>
 <body>
@@ -160,12 +159,14 @@
 
         <div id="jadwal-section" class="settings-card">
             <div class="card-header"><h3><i class="fa-solid fa-sliders"></i> Konfigurasi Jadwal Kerja</h3></div>
-            <table class="settings-table">
-                <thead>
-                    <tr><th>Hari</th><th>Mulai Masuk</th><th>Batas Telat</th><th>Akhir Masuk</th><th>Mulai Pulang</th><th>Akhir Pulang</th><th style="text-align: center;">Libur</th></tr>
-                </thead>
-                <tbody id="settingsBody"><tr><td colspan="7">Memuat data...</td></tr></tbody>
-            </table>
+            <div class="settings-table-wrapper" style="overflow-x: auto;">
+                <table class="settings-table">
+                    <thead>
+                        <tr><th>Hari</th><th>Mulai Masuk</th><th>Batas Telat</th><th>Akhir Masuk</th><th>Mulai Pulang</th><th>Akhir Pulang</th><th style="text-align: center;">Libur</th></tr>
+                    </thead>
+                    <tbody id="settingsBody"><tr><td colspan="7" style="text-align:center;">Memuat data...</td></tr></tbody>
+                </table>
+            </div>
             <button onclick="saveAllSettings()" class="btn btn-save">SIMPAN PERUBAHAN JADWAL</button>
         </div>
 
@@ -184,7 +185,7 @@
                 <button onclick="exportExcel()" class="btn btn-excel"><i class="fa-solid fa-file-excel"></i> Excel</button>
                 <button onclick="exportPDF()" class="btn btn-pdf"><i class="fa-solid fa-file-pdf"></i> PDF</button>
             </div>
-            <div class="table-container">
+            <div class="table-container" style="overflow-x: auto;">
                 <table class="data-table">
                     <thead><tr><th>Tanggal</th><th>Nama Karyawan</th><th>Jam Masuk</th><th>Jam Pulang</th><th>Status</th></tr></thead>
                     <tbody id="dataBody"></tbody>
@@ -206,6 +207,9 @@
 
     function scrollToSection(id) {
         document.getElementById(id).scrollIntoView({ behavior: 'smooth' });
+        document.querySelectorAll('.menu-item').forEach(m => m.classList.remove('active'));
+        const activeMenu = document.querySelector(`[onclick="scrollToSection('${id}')"]`);
+        if(activeMenu) activeMenu.classList.add('active');
         if(id === 'dashboard-top') fetchData('hari', document.getElementById('btn-hari-ini'));
     }
 
@@ -232,7 +236,7 @@
     async function saveAllSettings() {
         const rows = document.querySelectorAll('#settingsBody tr');
         const btn = document.querySelector('.btn-save');
-        btn.innerText = "Menyimpan..."; btn.disabled = true;
+        btn.innerText = "⏳ Menyimpan..."; btn.disabled = true;
         for (const row of rows) {
             const id = row.getAttribute('data-id');
             await client.from('pengaturan_absen').update({
@@ -249,23 +253,23 @@
     }
 
     async function fetchData(range, btn) {
-        // Atur status aktif tombol
         document.querySelectorAll('.btn-filter').forEach(b => b.classList.remove('active'));
         if(btn) btn.classList.add('active');
 
         const today = new Date();
+        const localDateStr = today.toLocaleDateString('en-CA'); 
         let query = client.from('presensi').select('*, karyawan(nama)');
         
         if(range === 'hari') {
-            query = query.eq('tanggal', today.toISOString().split('T')[0]);
-            document.getElementById('datePicker').value = ""; // Reset kalender jika pilih filter cepat
+            query = query.eq('tanggal', localDateStr);
+            document.getElementById('datePicker').value = "";
         } else if(range === 'minggu') {
             let d = new Date(); d.setDate(d.getDate()-7);
-            query = query.gte('tanggal', d.toISOString().split('T')[0]);
+            query = query.gte('tanggal', d.toLocaleDateString('en-CA'));
             document.getElementById('datePicker').value = "";
         } else if(range === 'bulan') {
             let f = new Date(today.getFullYear(), today.getMonth(), 1);
-            query = query.gte('tanggal', f.toISOString().split('T')[0]);
+            query = query.gte('tanggal', f.toLocaleDateString('en-CA'));
             document.getElementById('datePicker').value = "";
         } else if(range === 'custom') {
             const selectedDate = document.getElementById('datePicker').value;
@@ -275,6 +279,12 @@
 
         const { data, error } = await query.order('jam_masuk', {ascending: false});
         if(error) return;
+
+        // Ambil batas telat dinamis hari ini
+        const currentHariId = today.getDay() === 0 ? 7 : today.getDay();
+        const { data: currentSet } = await client.from('pengaturan_absen').select('batas_terlambat').eq('hari_id', currentHariId).single();
+        if(currentSet) BATAS_TELAT_GLOBAL = currentSet.batas_terlambat;
+        document.getElementById('info-batas').innerText = `Batas Terlambat: ${BATAS_TELAT_GLOBAL}`;
 
         currentData = (data || []).map(d => {
             let status = d.jam_masuk > BATAS_TELAT_GLOBAL ? 'Terlambat' : 'Tepat Waktu';
@@ -310,18 +320,19 @@
         if(lineChartInstance) lineChartInstance.destroy();
         if(doughnutChartInstance) doughnutChartInstance.destroy();
         
+        const labels = Object.keys(dateCounts).sort();
         const ctxL = document.getElementById('lineChart');
         lineChartInstance = new Chart(ctxL, {
             type: 'line',
-            data: { labels: Object.keys(dateCounts).sort(), datasets: [{ label: 'Kehadiran', data: Object.values(dateCounts), borderColor: '#0d47a1', backgroundColor: 'rgba(13, 71, 161, 0.1)', fill: true, tension: 0.3 }] },
-            options: { maintainAspectRatio: false, plugins: { legend: { display: false } } }
+            data: { labels: labels, datasets: [{ label: 'Kehadiran', data: labels.map(l => dateCounts[l]), borderColor: '#0d47a1', backgroundColor: 'rgba(13, 71, 161, 0.1)', fill: true, tension: 0.3 }] },
+            options: { maintainAspectRatio: false }
         });
 
         const ctxD = document.getElementById('doughnutChart');
         doughnutChartInstance = new Chart(ctxD, {
             type: 'doughnut',
             data: { labels: ['Tepat', 'Telat'], datasets: [{ data: [tepat, telat], backgroundColor: ['#1b8e48', '#d32f2f'], borderWidth: 0 }] },
-            options: { maintainAspectRatio: false, cutout: '70%', plugins: { legend: { position: 'bottom' } } }
+            options: { maintainAspectRatio: false, cutout: '70%' }
         });
     }
 
@@ -330,7 +341,23 @@
         document.getElementById('statTotalKaryawan').innerText = count || 0;
     }
 
-    loadSettings(); loadTotalKaryawan(); fetchData('hari', document.getElementById('btn-hari-ini'));
+    function exportExcel() {
+        if(currentData.length === 0) return alert("Data Kosong");
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(currentData.map(d => ({Tanggal: d.tanggal, Nama: d.karyawan?.nama, Masuk: d.jam_masuk, Pulang: d.jam_keluar, Status: d.computed_status}))), "Laporan");
+        XLSX.writeFile(wb, `Laporan_PTDAK_${new Date().toLocaleDateString()}.xlsx`);
+    }
+
+    function exportPDF() {
+        if(currentData.length === 0) return alert("Data Kosong");
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+        doc.text("Laporan Presensi PT DAK", 14, 15);
+        doc.autoTable({ head: [['Tanggal', 'Nama', 'Masuk', 'Pulang', 'Status']], body: currentData.map(d => [d.tanggal, d.karyawan?.nama, d.jam_masuk, d.jam_keluar, d.computed_status]), startY: 25, headStyles: {fillColor: [13, 71, 161]} });
+        doc.save("Laporan_PTDAK.pdf");
+    }
+
+    window.onload = () => { loadSettings(); loadTotalKaryawan(); fetchData('hari', document.getElementById('btn-hari-ini')); };
 </script>
 </body>
 </html>
