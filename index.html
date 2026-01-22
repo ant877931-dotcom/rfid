@@ -183,7 +183,7 @@
     function updateCharts(trend, h, i) {
         if(lineC) lineC.destroy(); if(pieC) pieC.destroy();
         lineC = new Chart(document.getElementById('lineChart'), { type:'line', data:{ labels:Object.keys(trend), datasets:[{label:'Presensi', data:Object.values(trend), borderColor:'#0d47a1', fill:true}] }});
-        pieC = new Chart(document.getElementById('pieChart'), { type:'doughnut', data:{ labels:['Tepat','Issue'], datasets:[{data:[h,i], backgroundColor:['#1b8e48','#d32f2f']}] }});
+        pieC = new Chart(document.getElementById('pieChart'), { type:'doughnut', data:{ labels:['Tepat','Terlambat'], datasets:[{data:[h,i], backgroundColor:['#1b8e48','#d32f2f']}] }});
     }
 
     // --- FUNGSI EXPORT EXCEL ---
