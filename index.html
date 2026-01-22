@@ -63,7 +63,7 @@
 
         <div class="stats-grid">
             <div class="stat-card"><div class="stat-icon" style="background:#e8f5e9;color:var(--success)"><i class="fa-solid fa-user-check"></i></div><div><h3>Hadir</h3><p id="statHadir">0</p></div></div>
-            <div class="stat-card"><div class="stat-icon" style="background:#ffebee;color:var(--danger)"><i class="fa-solid fa-user-clock"></i></div><div><h3>Terlambat</h3><p id="statIssue">0</p></div></div>
+            <div class="stat-card"><div class="stat-icon" style="background:#ffebee;color:var(--danger)"><i class="fa-solid fa-user-clock"></i></div><div><h3>Terlambat</h3><p id="statTerlambat">0</p></div></div>
             <div class="stat-card"><div class="stat-icon" style="background:#e3f2fd;color:var(--primary)"><i class="fa-solid fa-users"></i></div><div><h3>Karyawan</h3><p id="statTotalK">0</p></div></div>
         </div>
 
@@ -101,7 +101,6 @@
     const SUPABASE_KEY = 'sb_publishable_nGr7Fit3oX6dF4WcNPOq9g_AFpTcezy';
     const client = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
     
-    // VARIABEL GLOBAL UNTUK MENYIMPAN DATA (Agar bisa diexport)
     let currentData = [];
     let lineC, pieC;
 
@@ -130,7 +129,7 @@
         
         let query = client.from('presensi').select('*, karyawan(nama)');
         const today = new Date();
-        const localDate = today.toLocaleDateString('en-CA'); // Format YYYY-MM-DD
+        const localDate = today.toLocaleDateString('en-CA'); 
         
         if(range==='hari') {
             query = query.eq('tanggal', localDate);
@@ -147,14 +146,14 @@
 
         const {data, error} = await query.order('jam_masuk', {ascending:false});
         if(!error) {
-            currentData = data; // Simpan ke variabel global
+            currentData = data; 
             renderData(data);
         }
     }
 
     function renderData(data) {
         const tb = document.getElementById('dataBody'); tb.innerHTML = '';
-        let hadir = 0, issue = 0;
+        let hadir = 0, terlambat = 0;
         const trend = {};
 
         if(data.length === 0) {
@@ -164,7 +163,11 @@
         data.forEach(d => {
             const isLate = d.status_kehadiran === 'Terlambat';
             const isEarly = d.status_pulang === 'Pulang Awal';
-            if(!isLate) hadir++; if(isLate || isEarly) issue++;
+            
+            // Hitung statistik
+            if(!isLate) hadir++; 
+            if(isLate) terlambat++; // Fokus pada keterlambatan saja untuk statistik ini
+            
             trend[d.tanggal] = (trend[d.tanggal] || 0) + 1;
 
             tb.innerHTML += `<tr>
@@ -176,17 +179,34 @@
             </tr>`;
         });
         document.getElementById('statHadir').innerText = hadir;
-        document.getElementById('statIssue').innerText = issue;
-        updateCharts(trend, hadir, issue);
+        document.getElementById('statTerlambat').innerText = terlambat;
+        updateCharts(trend, hadir, terlambat);
     }
 
-    function updateCharts(trend, h, i) {
+    function updateCharts(trend, h, t) {
         if(lineC) lineC.destroy(); if(pieC) pieC.destroy();
-        lineC = new Chart(document.getElementById('lineChart'), { type:'line', data:{ labels:Object.keys(trend), datasets:[{label:'Presensi', data:Object.values(trend), borderColor:'#0d47a1', fill:true}] }});
-        pieC = new Chart(document.getElementById('pieChart'), { type:'doughnut', data:{ labels:['Tepat','Terlambat'], datasets:[{data:[h,i], backgroundColor:['#1b8e48','#d32f2f']}] }});
+        
+        // Diagram Garis (Trend)
+        lineC = new Chart(document.getElementById('lineChart'), { 
+            type:'line', 
+            data:{ 
+                labels:Object.keys(trend), 
+                datasets:[{label:'Presensi', data:Object.values(trend), borderColor:'#0d47a1', fill:true}] 
+            },
+            options: { maintainAspectRatio: false }
+        });
+
+        // Diagram Lingkaran (Hadir vs Terlambat)
+        pieC = new Chart(document.getElementById('pieChart'), { 
+            type:'doughnut', 
+            data:{ 
+                labels:['Tepat Waktu','Terlambat'], // Label diubah ke Terlambat
+                datasets:[{data:[h,t], backgroundColor:['#1b8e48','#d32f2f']}] 
+            },
+            options: { maintainAspectRatio: false }
+        });
     }
 
-    // --- FUNGSI EXPORT EXCEL ---
     function exportXLS() {
         if(currentData.length === 0) return alert("Data Kosong!");
         const dataToExport = currentData.map(d => ({
@@ -197,51 +217,42 @@
             Status_Masuk: d.status_kehadiran,
             Status_Pulang: d.status_pulang || '-'
         }));
-
         const ws = XLSX.utils.json_to_sheet(dataToExport);
         const wb = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(wb, ws, "Laporan");
         XLSX.writeFile(wb, `Laporan_Presensi_${new Date().toISOString().slice(0,10)}.xlsx`);
     }
 
-    // --- FUNGSI EXPORT PDF ---
     function exportPDF() {
         if(currentData.length === 0) return alert("Data Kosong!");
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF();
-
         doc.text("Laporan Presensi Karyawan - PT DAK", 14, 15);
         doc.setFontSize(10);
         doc.text(`Dicetak pada: ${new Date().toLocaleString('id-ID')}`, 14, 22);
-
         const tableColumn = ["Tanggal", "Nama", "Masuk", "Pulang", "Status Masuk", "Status Pulang"];
         const tableRows = [];
-
         currentData.forEach(d => {
-            const rowData = [
+            tableRows.push([
                 d.tanggal,
                 d.karyawan?.nama || 'Tanpa Nama',
                 d.jam_masuk,
                 d.jam_keluar || '-',
                 d.status_kehadiran,
                 d.status_pulang || '-'
-            ];
-            tableRows.push(rowData);
+            ]);
         });
-
         doc.autoTable({
             head: [tableColumn],
             body: tableRows,
             startY: 25,
             theme: 'grid',
-            headStyles: { fillColor: [13, 71, 161] } // Warna biru PT DAK
+            headStyles: { fillColor: [13, 71, 161] }
         });
-
         doc.save(`Laporan_Presensi_${new Date().toISOString().slice(0,10)}.pdf`);
     }
 
     async function init() {
-        // Load Settings
         const {data: settings} = await client.from('pengaturan_absen').select('*').order('hari_id');
         if(settings) {
             settings.forEach(r => {
@@ -254,12 +265,8 @@
                 </tr>`;
             });
         }
-
-        // Load Total Karyawan
         const {count} = await client.from('karyawan').select('*', {count:'exact', head:true});
         document.getElementById('statTotalK').innerText = count || 0;
-
-        // Load Data Awal (Hari Ini)
         fetchData('hari', document.getElementById('btn-hari'));
     }
     init();
