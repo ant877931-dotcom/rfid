@@ -4,13 +4,16 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard Admin PT DAK</title>
+    
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
+    
     <style>
         :root { --primary: #0d47a1; --primary-light: #e3f2fd; --bg: #f4f6f8; --text: #1e293b; --success: #1b8e48; --danger: #d32f2f; --warning: #f59e0b; }
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Roboto', sans-serif; }
@@ -35,7 +38,7 @@
         .st-hadir { background: #e8f5e9; color: var(--success); }
         .st-telat, .st-awal { background: #ffebee; color: var(--danger); }
         .controls { display: flex; gap: 10px; margin-bottom: 20px; align-items: center; flex-wrap: wrap; }
-        .btn { padding: 10px 20px; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; transition: 0.2s; }
+        .btn { padding: 10px 20px; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; transition: 0.2s; display: flex; align-items: center; gap: 8px;}
         .btn-filter { background: #fff; border: 1px solid #ddd; }
         .btn-filter.active { background: var(--primary); color: #fff; border-color: var(--primary); }
         input[type="date"], input[type="time"] { padding: 8px; border: 1px solid #ddd; border-radius: 6px; }
@@ -72,7 +75,7 @@
         <div id="jadwal-section" class="card">
             <h3><i class="fa-solid fa-calendar-alt"></i> Konfigurasi Jadwal</h3>
             <table><thead><tr><th>Hari</th><th>Masuk</th><th>Telat</th><th>Pulang</th><th>Libur</th></tr></thead><tbody id="settingsBody"></tbody></table>
-            <button onclick="saveSet()" class="btn" style="background:var(--primary);color:#fff;width:100%;margin-top:15px;">Simpan Perubahan</button>
+            <button onclick="saveSet()" class="btn" style="background:var(--primary);color:#fff;width:100%;margin-top:15px;justify-content:center;">Simpan Perubahan</button>
         </div>
 
         <div id="data-section" class="card">
@@ -82,6 +85,7 @@
                 <input type="date" id="datePicker" onchange="fetchData('custom', null)">
                 <div style="flex-grow:1"></div>
                 <button onclick="exportXLS()" class="btn" style="background:#217346;color:#fff"><i class="fa-solid fa-file-excel"></i> Excel</button>
+                <button onclick="exportPDF()" class="btn" style="background:#b30b00;color:#fff"><i class="fa-solid fa-file-pdf"></i> PDF</button>
             </div>
             <div class="table-container">
                 <table>
@@ -96,6 +100,9 @@
     const SUPABASE_URL = 'https://yoxipkgpxhavmxknlwft.supabase.co';
     const SUPABASE_KEY = 'sb_publishable_nGr7Fit3oX6dF4WcNPOq9g_AFpTcezy';
     const client = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    
+    // VARIABEL GLOBAL UNTUK MENYIMPAN DATA (Agar bisa diexport)
+    let currentData = [];
     let lineC, pieC;
 
     setInterval(() => document.getElementById('clock').innerText = new Date().toLocaleTimeString('id-ID'), 1000);
@@ -103,6 +110,9 @@
 
     async function saveSet() {
         const rows = document.querySelectorAll('#settingsBody tr');
+        const btn = document.querySelector('button[onclick="saveSet()"]');
+        btn.innerText = "Menyimpan..."; btn.disabled = true;
+
         for(let r of rows) {
             const id = r.dataset.id;
             await client.from('pengaturan_absen').update({
@@ -117,20 +127,39 @@
 
     async function fetchData(range, btn) {
         if(btn) { document.querySelectorAll('.btn-filter').forEach(b=>b.classList.remove('active')); btn.classList.add('active'); }
-        let query = client.from('presensi').select('*, karyawan(nama)');
-        const today = new Date().toISOString().split('T')[0];
         
-        if(range==='hari') query = query.eq('tanggal', today);
-        else if(range==='custom') query = query.eq('tanggal', document.getElementById('datePicker').value);
+        let query = client.from('presensi').select('*, karyawan(nama)');
+        const today = new Date();
+        const localDate = today.toLocaleDateString('en-CA'); // Format YYYY-MM-DD
+        
+        if(range==='hari') {
+            query = query.eq('tanggal', localDate);
+            document.getElementById('datePicker').value = "";
+        } else if(range==='minggu') {
+            let d = new Date(); d.setDate(d.getDate() - 7);
+            query = query.gte('tanggal', d.toLocaleDateString('en-CA'));
+            document.getElementById('datePicker').value = "";
+        } else if(range==='custom') {
+            const val = document.getElementById('datePicker').value;
+            if(!val) return;
+            query = query.eq('tanggal', val);
+        }
 
         const {data, error} = await query.order('jam_masuk', {ascending:false});
-        if(!error) renderData(data);
+        if(!error) {
+            currentData = data; // Simpan ke variabel global
+            renderData(data);
+        }
     }
 
     function renderData(data) {
         const tb = document.getElementById('dataBody'); tb.innerHTML = '';
         let hadir = 0, issue = 0;
         const trend = {};
+
+        if(data.length === 0) {
+            tb.innerHTML = '<tr><td colspan="5" style="text-align:center;">Tidak ada data.</td></tr>';
+        }
 
         data.forEach(d => {
             const isLate = d.status_kehadiran === 'Terlambat';
@@ -140,8 +169,8 @@
 
             tb.innerHTML += `<tr>
                 <td>${d.tanggal}</td>
-                <td style="font-weight:700">${d.karyawan?.nama}</td>
-                <td>${d.jam_masuk.slice(0,5)} <span class="status-badge ${isLate?'st-telat':'st-hadir'}">${d.status_kehadiran}</span></td>
+                <td style="font-weight:700">${d.karyawan?.nama || 'Tanpa Nama'}</td>
+                <td>${d.jam_masuk?.slice(0,5)} <span class="status-badge ${isLate?'st-telat':'st-hadir'}">${d.status_kehadiran}</span></td>
                 <td>${d.jam_keluar?d.jam_keluar.slice(0,5):'--:--'}</td>
                 <td>${d.status_pulang ? `<span class="status-badge ${isEarly?'st-awal':'st-hadir'}">${d.status_pulang}</span>` : '-'}</td>
             </tr>`;
@@ -157,19 +186,80 @@
         pieC = new Chart(document.getElementById('pieChart'), { type:'doughnut', data:{ labels:['Tepat','Issue'], datasets:[{data:[h,i], backgroundColor:['#1b8e48','#d32f2f']}] }});
     }
 
-    async function init() {
-        const {data} = await client.from('pengaturan_absen').select('*').order('hari_id');
-        data.forEach(r => {
-            document.getElementById('settingsBody').innerHTML += `<tr data-id="${r.id}">
-                <td>${r.hari}</td>
-                <td><input type="time" class="in-m" value="${r.mulai_masuk}"></td>
-                <td><input type="time" class="in-t" value="${r.batas_terlambat}"></td>
-                <td><input type="time" class="in-p" value="${r.mulai_keluar}"></td>
-                <td><input type="checkbox" class="in-l" ${r.is_libur?'checked':''}></td>
-            </tr>`;
+    // --- FUNGSI EXPORT EXCEL ---
+    function exportXLS() {
+        if(currentData.length === 0) return alert("Data Kosong!");
+        const dataToExport = currentData.map(d => ({
+            Tanggal: d.tanggal,
+            Nama: d.karyawan?.nama,
+            Masuk: d.jam_masuk,
+            Pulang: d.jam_keluar || '-',
+            Status_Masuk: d.status_kehadiran,
+            Status_Pulang: d.status_pulang || '-'
+        }));
+
+        const ws = XLSX.utils.json_to_sheet(dataToExport);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "Laporan");
+        XLSX.writeFile(wb, `Laporan_Presensi_${new Date().toISOString().slice(0,10)}.xlsx`);
+    }
+
+    // --- FUNGSI EXPORT PDF ---
+    function exportPDF() {
+        if(currentData.length === 0) return alert("Data Kosong!");
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+
+        doc.text("Laporan Presensi Karyawan - PT DAK", 14, 15);
+        doc.setFontSize(10);
+        doc.text(`Dicetak pada: ${new Date().toLocaleString('id-ID')}`, 14, 22);
+
+        const tableColumn = ["Tanggal", "Nama", "Masuk", "Pulang", "Status Masuk", "Status Pulang"];
+        const tableRows = [];
+
+        currentData.forEach(d => {
+            const rowData = [
+                d.tanggal,
+                d.karyawan?.nama || 'Tanpa Nama',
+                d.jam_masuk,
+                d.jam_keluar || '-',
+                d.status_kehadiran,
+                d.status_pulang || '-'
+            ];
+            tableRows.push(rowData);
         });
+
+        doc.autoTable({
+            head: [tableColumn],
+            body: tableRows,
+            startY: 25,
+            theme: 'grid',
+            headStyles: { fillColor: [13, 71, 161] } // Warna biru PT DAK
+        });
+
+        doc.save(`Laporan_Presensi_${new Date().toISOString().slice(0,10)}.pdf`);
+    }
+
+    async function init() {
+        // Load Settings
+        const {data: settings} = await client.from('pengaturan_absen').select('*').order('hari_id');
+        if(settings) {
+            settings.forEach(r => {
+                document.getElementById('settingsBody').innerHTML += `<tr data-id="${r.id}">
+                    <td>${r.hari}</td>
+                    <td><input type="time" class="in-m" value="${r.mulai_masuk||''}"></td>
+                    <td><input type="time" class="in-t" value="${r.batas_terlambat||''}"></td>
+                    <td><input type="time" class="in-p" value="${r.mulai_keluar||''}"></td>
+                    <td><input type="checkbox" class="in-l" ${r.is_libur?'checked':''}></td>
+                </tr>`;
+            });
+        }
+
+        // Load Total Karyawan
         const {count} = await client.from('karyawan').select('*', {count:'exact', head:true});
-        document.getElementById('statTotalK').innerText = count;
+        document.getElementById('statTotalK').innerText = count || 0;
+
+        // Load Data Awal (Hari Ini)
         fetchData('hari', document.getElementById('btn-hari'));
     }
     init();
